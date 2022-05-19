@@ -1,0 +1,7 @@
+# SPDX-License-Identifier: CC0-1.0
+# SPDX-FileCopyrightText: No rights reserved
+
+extends:
+ - ./tests/lint/eslintrc-extra.yml
+ - ./tests/lint/eslintrc-gjs.yml
+ - ./tests/lint/eslintrc-shell.yml

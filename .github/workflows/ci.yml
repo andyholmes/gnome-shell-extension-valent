@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: REUSE Compliance Check
+        uses: fsfe/reuse-action@v1
+        with:
+          args: lint
+
+      - name: YAMLlint
+        if: ${{ always() }}
+        run: |
+          yamllint --config-file tests/extra/yamllint.yml \
+                   --format github \
+                   $(git ls-files '*.yml')
+
+  build:
+    name: Build
+    needs: [lint]
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/andyholmes/gnome-shell-extension-valent:latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install Dependencies
+        run: |
+          pip install pylint
+          yarn add eslint eslint-plugin-jsdoc
+          echo "$(yarn bin)" >> $GITHUB_PATH
+
+      - name: Setup
+        run: |
+          meson setup --prefix=/usr \
+                      -Dtests=true \
+                      _build
+
+      - name: Test
+        run: |
+          meson test -C _build \
+                --print-errorlogs
+
+      - name: Build
+        run: |
+          meson compile -C _build \
+                        make-zip
+
+      - name: Upload
+        uses: actions/upload-artifact@v2
+        with:
+          name: extension-zip
+          path: _build/valent@andyholmes.ca.zip

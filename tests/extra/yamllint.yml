@@ -1,0 +1,16 @@
+# SPDX-License-Identifier: CC0-1.0
+# SPDX-FileCopyrightText: No rights reserved
+
+extends: default
+
+# Ignore ESLint configurations imported from GNOME Shell
+ignore: |
+  tests/lint/eslintrc-*.yml
+
+rules:
+  # Github Actions
+  document-start: disable
+  quoted-strings:
+    quote-type: any
+    required: only-when-needed
+  truthy: disable

@@ -1,0 +1,11 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+
+Files: *.json *.po *.pot
+Copyright: 2022 Andy Holmes <andrew.g.r.holmes@gmail.com>
+License: GPL-3.0-or-later
+
+Files: .github .gitignore build-aux/misc/* CHANGELOG.md CONTRIBUTING.md
+    README.md *.svg
+Copyright: No rights reserved
+License: CC0-1.0
+
