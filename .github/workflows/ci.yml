@@ -60,7 +60,7 @@ jobs:
                         make-zip
 
       - name: Upload
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: extension-zip
           path: _build/valent@andyholmes.ca.zip
