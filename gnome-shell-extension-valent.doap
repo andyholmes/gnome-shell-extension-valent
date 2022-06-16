@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- SPDX-License-Identifier: CC0-1.0 -->
+<!-- SPDX-FileCopyrightText: No rights reserved -->
+
+<Project xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+         xmlns:foaf="http://xmlns.com/foaf/0.1/"
+         xmlns:gnome="http://api.gnome.org/doap-extensions#"
+         xmlns="http://usefulinc.com/ns/doap#">
+
+  <name xml:lang="en">Valent (GNOME Shell Extension)</name>
+  <shortname>gnome-shell-extension-valent</shortname>
+  <description xml:lang="en">Valent is an implementation of the KDE Connect protocol, built on GNOME platform libraries. This GNOME Shell Extension helps Valent integrate with the GNOME desktop.</description>
+  <shortdesc xml:lang="en">GNOME Shell integration for Valent</shortdesc>
+
+  <category rdf:resource="http://api.gnome.org/doap-extensions#apps" />
+
+  <bug-database rdf:resource="https://github.com/andyholmes/gnome-shell-extension-valent/issues/" />
+  <homepage rdf:resource="https://github.com/andyholmes/gnome-shell-extension-valent/" />
+  <license rdf:resource="http://usefulinc.com/doap/licenses/gpl" />
+  <programming-language>JavaScript</programming-language>
+  <programming-language>Python</programming-language>
+
+  <maintainer>
+    <foaf:Person>
+      <foaf:name>Andy Holmes</foaf:name>
+      <foaf:mbox rdf:resource="mailto:andrew.g.r.holmes@gmail.com"/>
+      <gnome:userid>andyholmes</gnome:userid>
+    </foaf:Person>
+  </maintainer>
+</Project>

@@ -1,0 +1,111 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  yamllint:
+    name: YAMLlint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Lint
+        if: ${{ always() }}
+        run: |
+          yamllint --config-file tests/extra/yamllint.yml \
+                   --format github \
+                   $(git ls-files '*.yml')
+
+  eslint:
+    name: ESLint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Lint
+        uses: reviewdog/action-eslint@v1
+        with:
+          reporter: github-pr-review
+          workdir: src/extension/
+
+  pylint:
+    name: Pylint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Lint
+        uses: dciborow/action-pylint@main
+        with:
+          reporter: github-pr-review
+          workdir: src/plugin/gnome-shell/
+
+  reuse:
+    name: REUSE Compliance
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Lint
+        uses: fsfe/reuse-action@v1
+        with:
+          args: lint
+
+  codespell:
+    name: Codespell
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Spell Check
+        uses: codespell-project/actions-codespell@master
+        with:
+          skip: ./tests,./*.po
+
+  commitlint:
+    name: Commitlint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Lint
+        uses: wagoid/commitlint-github-action@v4
+
+  test-build:
+    name: Test Build
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/andyholmes/gnome-shell-extension-valent:latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Build
+        env:
+          WORKSPACE: ${{ github.workspace }}
+        run: |
+          ./build-aux/misc/ego.sh
+
+      - name: Upload
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-build
+          path: valent@andyholmes.ca.zip

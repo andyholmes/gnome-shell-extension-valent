@@ -1,0 +1,28 @@
+name: CD
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  extension:
+    name: Extension
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/andyholmes/gnome-shell-extension-valent:latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Build
+        env:
+          WORKSPACE: ${{ github.workspace }}
+        run: |
+          ./build-aux/misc/ego.sh
+
+      - name: Upload
+        uses: actions/upload-artifact@v3
+        with:
+          name: nightly-build
+          path: valent@andyholmes.ca.zip

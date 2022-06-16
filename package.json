@@ -1,0 +1,13 @@
+{
+  "name": "gnome-shell-extension-valent",
+  "version": "0.0.0",
+  "description": "CI dependencies for Valent (GNOME Shell Extension)",
+  "dependencies": {
+    "yarn": "^1.22.19"
+  },
+  "devDependencies": {
+    "eslint": "^8.17.0",
+    "eslint-plugin-jsdoc": "^39.3.2"
+  },
+  "license" : "CC0-1.0"
+}

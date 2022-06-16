@@ -1,0 +1,42 @@
+name: Update CI
+
+on:
+  push:
+    branches: [main]
+    paths: [tests/extra/Dockerfile]
+  pull_request:
+    branches: [main]
+    paths: [tests/extra/Dockerfile]
+  schedule:
+    # Once a week to keep dependencies up to date
+    - cron: 0 0 * * 0
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  USERNAME: ${{ github.actor }}
+  PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Login
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ env.USERNAME }}
+          password: ${{ env.PASSWORD }}
+
+      - name: Build
+        uses: docker/build-push-action@v3
+        with:
+          file: ./tests/extra/Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest

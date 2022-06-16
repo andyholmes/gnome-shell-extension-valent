@@ -1,0 +1,7 @@
+*~
+_build*
+
+# We don't really want these in our repository
+node_modules
+package-lock.json
+yarn.lock
