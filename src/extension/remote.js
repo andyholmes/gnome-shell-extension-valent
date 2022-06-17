@@ -123,8 +123,8 @@ var Device = GObject.registerClass({
         ),
     },
 }, class Device extends Gio.DBusProxy {
-    _init(service, objectPath) {
-        super._init({
+    constructor(service, objectPath) {
+        super({
             g_connection: service.g_connection,
             g_name: SERVICE_NAME,
             g_object_path: objectPath,
@@ -223,8 +223,8 @@ var Service = GObject.registerClass({
         },
     },
 }, class Service extends Gio.DBusProxy {
-    _init() {
-        super._init({
+    constructor() {
+        super({
             g_bus_type: Gio.BusType.SESSION,
             g_name: SERVICE_NAME,
             g_object_path: SERVICE_PATH,

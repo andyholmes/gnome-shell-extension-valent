@@ -4,7 +4,6 @@
 
 /* exported Clipboard */
 
-const ByteArray = imports.byteArray;
 const { GLib, GjsPrivate, Gio, GObject, Meta } = imports.gi;
 
 
@@ -62,11 +61,10 @@ const TEXT_MIMETYPES = [
 var Clipboard = GObject.registerClass({
     GTypeName: 'ValentClipboard',
 }, class ValentClipboard extends GjsPrivate.DBusImplementation {
-    _init() {
-        super._init({
-            g_interface_info: DBUS_INFO,
-        });
+    constructor() {
+        super({ g_interface_info: DBUS_INFO });
 
+        this._decoder = new TextDecoder('utf-8', { fatal: true });
         this._selection = global.display.get_selection();
         this._serviceOwner = null;
         this._transferring = false;
@@ -257,7 +255,7 @@ var Clipboard = GObject.registerClass({
                             const bytes = stream.steal_as_bytes();
                             const bytearray = bytes.get_data();
 
-                            resolve(ByteArray.toString(bytearray));
+                            resolve(this._decoder.decode(bytearray));
                         } catch (e) {
                             reject(e);
                         }

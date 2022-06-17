@@ -1,7 +1,7 @@
 %global tarball_version %%(echo %{version} | tr '~' '.')
 %global debug_package %{nil}
 
-%global gnome_shell_version 3.38.0
+%global gnome_shell_version 42.0
 %global libpeas_version     1.22.0
 %global valent_version      1.0.0.alpha
 
@@ -50,6 +50,6 @@ bundled Python plugin is used by Valent to communicate with the extension.
 %{_libdir}/valent/plugins/
 
 %changelog
-* Wed May 18 2022 Andy Holmes <andrew.g.r.holmes@gmail.com> - 1-1
+* Fri Jun 17 2022 Andy Holmes <andrew.g.r.holmes@gmail.com> - 1-1
 - Initial release
 

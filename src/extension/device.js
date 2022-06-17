@@ -49,8 +49,8 @@ var Battery = GObject.registerClass({
         ),
     },
 }, class Battery extends St.BoxLayout {
-    _init(params) {
-        super._init(Object.assign({
+    constructor(params) {
+        super(Object.assign({
             style_class: 'valent-device-battery',
         }, params));
 
