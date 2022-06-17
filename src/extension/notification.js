@@ -28,8 +28,8 @@ const _pushNotification = NotificationDaemon.GtkNotificationDaemonAppSource.prot
 const NotificationBanner = GObject.registerClass({
     GTypeName: 'ValentNotificationBanner',
 }, class NotificationBanner extends MessageTray.NotificationBanner {
-    _init(notification) {
-        super._init(notification);
+    constructor(notification) {
+        super(notification);
 
         if (this.notification._defaultAction === 'app.device') {
             const [
@@ -317,10 +317,6 @@ function _onSourceAdded(messageTray, source) {
 
 /** */
 function _patchValentNotificationSource() {
-    // This should only happen on versions of GNOME Shell older than GNOME 42
-    if (_sourceAddedId)
-        return;
-
     const source = Main.notificationDaemon._gtkNotificationDaemon._sources[APP_ID];
 
     if (source !== undefined) {

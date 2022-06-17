@@ -78,8 +78,8 @@ function installPlugin() {
 const ServiceIndicator = GObject.registerClass({
     GTypeName: 'ValentServiceIndicator',
 }, class ServiceIndicator extends PanelMenu.SystemIndicator {
-    _init() {
-        super._init();
+    constructor() {
+        super();
 
         this._devices = new WeakMap();
         this.connect('destroy', this._onDestroy);
