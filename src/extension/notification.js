@@ -352,7 +352,7 @@ function _unpatchValentNotificationSource() {
     }
 
     if (_sourceAddedId) {
-        Main.messageTray.disconnect('source-added', _sourceAddedId);
+        Main.messageTray.disconnect(_sourceAddedId);
         _sourceAddedId = null;
     }
 }
