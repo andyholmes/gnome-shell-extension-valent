@@ -5,8 +5,8 @@
 
 const { Gio, GLib, GObject } = imports.gi;
 
-const SERVICE_NAME = 'ca.andyholmes.Valent';
-const SERVICE_PATH = '/ca/andyholmes/Valent';
+const APPLICATION_ID = 'ca.andyholmes.Valent';
+const APPLICATION_PATH = '/ca/andyholmes/Valent';
 
 
 /**
@@ -123,13 +123,13 @@ var Device = GObject.registerClass({
         ),
     },
 }, class Device extends Gio.DBusProxy {
-    constructor(service, objectPath) {
-        super({
-            g_connection: service.g_connection,
-            g_name: SERVICE_NAME,
-            g_object_path: objectPath,
+    constructor(params = {}) {
+        super(Object.assign({
             g_interface_name: 'ca.andyholmes.Valent.Device',
-        });
+        }, params));
+
+        this.action_group = Gio.DBusActionGroup.get(this.g_connection,
+            this.g_name, this.g_object_path);
     }
 
     on_g_properties_changed(changed, _invalidated) {
@@ -187,13 +187,6 @@ var Device = GObject.registerClass({
     get type() {
         return this._get('Type', 'desktop');
     }
-
-    async start(cancellable = null) {
-        await _proxyInit(this, cancellable);
-
-        this.action_group = Gio.DBusActionGroup.get(this.g_connection,
-            this.g_name_owner, this.g_object_path);
-    }
 });
 
 
@@ -226,8 +219,8 @@ var Service = GObject.registerClass({
     constructor() {
         super({
             g_bus_type: Gio.BusType.SESSION,
-            g_name: SERVICE_NAME,
-            g_object_path: SERVICE_PATH,
+            g_name: APPLICATION_ID,
+            g_object_path: APPLICATION_PATH,
             g_interface_name: 'org.freedesktop.DBus.ObjectManager',
             g_flags: Gio.DBusProxyFlags.DO_NOT_AUTO_START_AT_CONSTRUCTION,
         });
@@ -236,8 +229,6 @@ var Service = GObject.registerClass({
         this._devices = new Map();
         this._starting = false;
 
-        this._interfacesChangedId = this.connect('g-signal',
-            this._onInterfacesChanged.bind(this));
         this._nameOwnerChangedId = this.connect('notify::g-name-owner',
             this._onNameOwnerChanged.bind(this));
     }
@@ -253,20 +244,20 @@ var Service = GObject.registerClass({
         return Array.from(this._devices.values());
     }
 
-    _onInterfacesChanged(proxy_, senderName_, signalName, parameters) {
-        try {
-            // Ignore signals until the ObjectManager has started
-            if (!this.active)
-                return;
+    on_g_signal(senderName_, signalName, parameters) {
+        // Ignore signals until the ObjectManager has started
+        if (!this.active)
+            return;
 
-            const args = parameters.deepUnpack();
+        const args = parameters.deepUnpack();
 
-            if (signalName === 'InterfacesAdded')
-                this._onInterfacesAdded(...args);
-            else if (signalName === 'InterfacesRemoved')
-                this._onInterfacesRemoved(...args);
-        } catch (e) {
-            logError(e);
+        if (signalName === 'InterfacesAdded') {
+            this._onInterfacesAdded(...args).catch(e => {
+                if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
+                    logError(e, signalName);
+            });
+        } else if (signalName === 'InterfacesRemoved') {
+            this._onInterfacesRemoved(...args);
         }
     }
 
@@ -277,23 +268,23 @@ var Service = GObject.registerClass({
      * @param {object} interfaces - A dictionary of interface objects
      */
     async _onInterfacesAdded(objectPath, interfaces) {
-        try {
-            // An empty list means only the object has been added
-            if (Object.values(interfaces).length === 0)
-                return;
+        // An empty list means only the object has been added
+        if (Object.values(interfaces).length === 0)
+            return;
 
-            if (this._devices.has(objectPath))
-                return;
+        if (this._devices.has(objectPath))
+            return;
 
-            // Create a proxy for the device
-            const device = new Device(this, objectPath);
-            await device.start(this._cancellable);
+        const device = new Device({
+            g_connection: this.g_connection,
+            g_flags: Gio.DBusProxyFlags.DO_NOT_AUTO_START,
+            g_name: this.g_name,
+            g_object_path: objectPath,
+        });
+        await _proxyInit(device, this._cancellable);
 
-            this._devices.set(objectPath, device);
-            this.emit('device-added', device);
-        } catch (e) {
-            logError(e, objectPath);
-        }
+        this._devices.set(objectPath, device);
+        this.emit('device-added', device);
     }
 
     /**
@@ -303,22 +294,18 @@ var Service = GObject.registerClass({
      * @param {string[]} interfaces - List of interface names removed
      */
     _onInterfacesRemoved(objectPath, interfaces) {
-        try {
-            // An empty interface list means the object is being removed
-            if (interfaces.length === 0)
-                return;
+        // An empty interface list means the object is being removed
+        if (interfaces.length === 0)
+            return;
 
-            // Ensure this is a managed device
-            const device = this._devices.get(objectPath);
+        // Ensure this is a managed device
+        const device = this._devices.get(objectPath);
 
-            if (device === undefined)
-                return;
+        if (device === undefined)
+            return;
 
-            this._devices.delete(objectPath);
-            this.emit('device-removed', device);
-        } catch (e) {
-            logError(e, objectPath);
-        }
+        this._devices.delete(objectPath);
+        this.emit('device-removed', device);
     }
 
     async _onNameOwnerChanged() {
@@ -335,13 +322,13 @@ var Service = GObject.registerClass({
                 await this._loadDevices();
             }
         } catch (e) {
-            if (!e.matches(Gio.IO_ERROR, Gio.IO_ERROR_CANCELLED))
+            if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
                 logError(e);
         }
     }
 
     async _loadDevices() {
-        const objects = await new Promise((resolve, reject) => {
+        const managedObjects = await new Promise((resolve, reject) => {
             this.call(
                 'GetManagedObjects',
                 null,
@@ -360,10 +347,9 @@ var Service = GObject.registerClass({
             );
         });
 
-        // We await in a loop to avoid weird race conditions
-        for (const [objectPath, object] of Object.entries(objects))
-            // eslint-disable-next-line no-await-in-loop
-            await this._onInterfacesAdded(objectPath, object);
+        return Promise.all(Object.entries(managedObjects).map(entry => {
+            return this._onInterfacesAdded(...entry);
+        }));
     }
 
     _unloadDevices() {
@@ -380,34 +366,29 @@ var Service = GObject.registerClass({
      * @param {GLib.Variant} [parameter] - An action parameter
      */
     activate_action(name, parameter = null) {
-        try {
-            const paramArray = [];
+        const paramArray = [];
 
-            if (parameter instanceof GLib.Variant)
-                paramArray[0] = parameter;
+        if (parameter instanceof GLib.Variant)
+            paramArray[0] = parameter;
 
-            Gio.DBus.session.call(
-                SERVICE_NAME,
-                SERVICE_PATH,
-                'org.freedesktop.Application',
-                'ActivateAction',
-                new GLib.Variant('(sava{sv})', [name, paramArray, {}]),
-                null,
-                Gio.DBusCallFlags.NONE,
-                -1,
-                this._cancellable,
-                (connection, res) => {
-                    try {
-                        connection.call_finish(res);
-                    } catch (e) {
-                        logError(e);
-                    }
+        Gio.DBus.session.call(
+            APPLICATION_ID,
+            APPLICATION_PATH,
+            'org.freedesktop.Application',
+            'ActivateAction',
+            new GLib.Variant('(sava{sv})', [name, paramArray, {}]),
+            null,
+            Gio.DBusCallFlags.NO_AUTO_START,
+            -1,
+            this._cancellable,
+            (connection, res) => {
+                try {
+                    connection.call_finish(res);
+                } catch (e) {
+                    logError(e);
                 }
-            );
-        } catch (e) {
-            if (!e.matches(Gio.IO_ERROR, Gio.IO_ERROR_CANCELLED))
-                logError(e);
-        }
+            }
+        );
     }
 
     /**
@@ -423,7 +404,7 @@ var Service = GObject.registerClass({
                 this._starting = true;
 
                 this._unloadDevices();
-                await _proxyInit(this);
+                await _proxyInit(this, this._cancellable);
                 await this._onNameOwnerChanged();
 
                 this._starting = false;
@@ -453,7 +434,7 @@ var Service = GObject.registerClass({
                             '/org/freedesktop/DBus',
                             'org.freedesktop.DBus',
                             'StartServiceByName',
-                            new GLib.Variant('(su)', [SERVICE_NAME, 0]),
+                            new GLib.Variant('(su)', [APPLICATION_ID, 0]),
                             new GLib.VariantType('(u)'),
                             Gio.DBusCallFlags.NONE,
                             -1,
@@ -503,9 +484,6 @@ var Service = GObject.registerClass({
     destroy() {
         if (!this._cancellable.is_cancelled()) {
             this._cancellable.cancel();
-
-            this.disconnect(this._interfacesChangedId);
-            this._interfacesChangedId = 0;
 
             this.disconnect(this._nameOwnerChangedId);
             this._nameOwnerChangedId = 0;

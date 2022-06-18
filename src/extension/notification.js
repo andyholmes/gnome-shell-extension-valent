@@ -12,8 +12,8 @@ const NotificationDaemon = imports.ui.notificationDaemon;
 const ExtensionUtils = imports.misc.extensionUtils;
 const _ = ExtensionUtils.gettext;
 
-const APP_ID = 'ca.andyholmes.Valent';
-const APP_PATH = '/ca/andyholmes/Valent';
+const APPLICATION_ID = 'ca.andyholmes.Valent';
+const APPLICATION_PATH = '/ca/andyholmes/Valent';
 const DEVICE_REGEX = /^(.+?)::notification::(.+)$/;
 
 // Overridden methods
@@ -136,8 +136,8 @@ const NotificationBanner = GObject.registerClass({
         const platformData = NotificationDaemon.getPlatformData();
 
         Gio.DBus.session.call(
-            APP_ID,
-            APP_PATH,
+            APPLICATION_ID,
+            APPLICATION_PATH,
             'org.freedesktop.Application',
             'ActivateAction',
             new GLib.Variant('(sava{sv})', ['device', [target], platformData]),
@@ -189,8 +189,8 @@ const Source = GObject.registerClass({
         const platformData = NotificationDaemon.getPlatformData();
 
         Gio.DBus.session.call(
-            APP_ID,
-            APP_PATH,
+            APPLICATION_ID,
+            APPLICATION_PATH,
             'org.freedesktop.Application',
             'ActivateAction',
             new GLib.Variant('(sava{sv})', ['device', [target], platformData]),
@@ -304,7 +304,7 @@ let _sourceAddedId = null;
  * @param {MessageTray.Source} source - The notification source
  */
 function _onSourceAdded(messageTray, source) {
-    if (source?._appId !== APP_ID)
+    if (source?._appId !== APPLICATION_ID)
         return;
 
     Object.assign(source, {
@@ -317,14 +317,15 @@ function _onSourceAdded(messageTray, source) {
 
 /** */
 function _patchValentNotificationSource() {
-    const source = Main.notificationDaemon._gtkNotificationDaemon._sources[APP_ID];
+    const notificationDaemon = Main.notificationDaemon._gtkNotificationDaemon;
+    const source = notificationDaemon._sources[APPLICATION_ID];
 
     if (source !== undefined) {
         Object.assign(source, {
+            _valentCloseNotification: Source.prototype._valentCloseNotification,
             addNotification: Source.prototype.addNotification,
             pushNotification: Source.prototype.pushNotification,
             createBanner: Source.prototype.createBanner,
-            _valentCloseNotification: Source.prototype._valentCloseNotification,
         });
 
         for (const notification of Object.values(source._notifications)) {
@@ -340,7 +341,8 @@ function _patchValentNotificationSource() {
 
 /** */
 function _unpatchValentNotificationSource() {
-    const source = Main.notificationDaemon._gtkNotificationDaemon._sources[APP_ID];
+    const notificationDaemon = Main.notificationDaemon._gtkNotificationDaemon;
+    const source = notificationDaemon._sources[APPLICATION_ID];
 
     if (source !== undefined) {
         Object.assign(source, {

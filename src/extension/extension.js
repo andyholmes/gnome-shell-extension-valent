@@ -117,8 +117,8 @@ const ServiceIndicator = GObject.registerClass({
         AggregateMenu.menu.addMenuItem(this.menu, ++networkIndex || 4);
 
         // TRANSLATORS: A menu option to activate the service
-        this._enableItem = this._item.menu.addAction(_('Turn On'),
-            this._enable.bind(this));
+        this._toggleItem = this._item.menu.addAction(_('Turn On'),
+            this._onToggleItemActivate.bind(this));
 
         // TRANSLATORS: A menu option to open the service settings
         this._item.menu.addAction(_('Valent Settings'),
@@ -128,7 +128,7 @@ const ServiceIndicator = GObject.registerClass({
         this.service.reload();
     }
 
-    async _enable() {
+    async _onToggleItemActivate() {
         try {
             if (this.service.active)
                 await this.service.stop();
@@ -175,18 +175,14 @@ const ServiceIndicator = GObject.registerClass({
     }
 
     _onServiceChanged(_service, _pspec) {
-        try {
-            if (this.service.active)
-                // TRANSLATORS: A menu option to deactivate the service
-                this._enableItem.label.text = _('Turn Off');
-            else
-                // TRANSLATORS: A menu option to activate the service
-                this._enableItem.label.text = _('Turn On');
+        if (this.service.active)
+            // TRANSLATORS: A menu option to deactivate the service
+            this._toggleItem.label.text = _('Turn Off');
+        else
+            // TRANSLATORS: A menu option to activate the service
+            this._toggleItem.label.text = _('Turn On');
 
-            this._sync();
-        } catch (e) {
-            logError(e, 'Valent');
-        }
+        this._sync();
     }
 
     _onDestroy(actor) {
@@ -197,7 +193,6 @@ const ServiceIndicator = GObject.registerClass({
             actor.service.destroy();
         }
 
-        actor._item.destroy();
         actor.menu.destroy();
     }
 });
