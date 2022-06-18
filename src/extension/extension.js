@@ -81,7 +81,6 @@ const ServiceIndicator = GObject.registerClass({
     constructor() {
         super();
 
-        this._devices = new WeakMap();
         this.connect('destroy', this._onDestroy);
 
         // Service Proxy
@@ -91,7 +90,7 @@ const ServiceIndicator = GObject.registerClass({
             this._onDeviceAdded.bind(this));
 
         this._deviceRemovedId = this.service.connect('device-removed',
-            this._onDeviceRemoved.bind(this));
+            this._sync.bind(this));
 
         this._serviceChangedId = this.service.connect('notify::active',
             this._onServiceChanged.bind(this));
@@ -170,44 +169,9 @@ const ServiceIndicator = GObject.registerClass({
         }
     }
 
-    _onDeviceChanged(device, changed, _invalidated) {
-        try {
-            changed = changed.deepUnpack();
-
-            if (changed.hasOwnProperty('Connected') ||
-                changed.hasOwnProperty('Paired'))
-                this._sync();
-        } catch (e) {
-            logError(e, 'Valent');
-        }
-    }
-
-    _onDeviceAdded(service, device) {
-        try {
-            const handlerId = device.connect('g-properties-changed',
-                this._onDeviceChanged.bind(this));
-            this._devices.set(device, handlerId);
-
-            this._sync();
-        } catch (e) {
-            logError(e, 'Valent');
-        }
-    }
-
-    _onDeviceRemoved(service, device, sync = true) {
-        try {
-            const handlerId = this._devices.get(device);
-
-            if (handlerId) {
-                device.disconnect(handlerId);
-                this._devices.delete(device);
-            }
-
-            if (sync)
-                this._sync();
-        } catch (e) {
-            logError(e, 'Valent');
-        }
+    _onDeviceAdded(service_, device) {
+        device.connect('notify::state', this._sync.bind(this));
+        this._sync();
     }
 
     _onServiceChanged(_service, _pspec) {
@@ -230,10 +194,6 @@ const ServiceIndicator = GObject.registerClass({
             actor.service.disconnect(actor._serviceChangedId);
             actor.service.disconnect(actor._deviceAddedId);
             actor.service.disconnect(actor._deviceRemovedId);
-
-            for (const device of actor.service.devices)
-                actor._onDeviceRemoved(actor.service, device, false);
-
             actor.service.destroy();
         }
 
