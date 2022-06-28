@@ -6,23 +6,32 @@ on:
   workflow_dispatch:
 
 jobs:
-  yamllint:
-    name: YAMLlint
+  pre-test:
+    name: Pre-Tests
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Lint
+      - name: ShellCheck
         if: ${{ always() }}
-        run: |
-          yamllint --config-file tests/extra/yamllint.yml \
-                   --format github \
-                   $(git ls-files '*.yml')
+        uses: reviewdog/action-shellcheck@v1
+        with:
+          reporter: github-pr-review
+          fail_on_error: true
+
+      - name: yamllint
+        if: ${{ always() }}
+        uses: reviewdog/action-yamllint@v1
+        with:
+          reporter: github-pr-review
+          fail_on_error: true
+          yamllint_flags: '--config-file tests/extra/yamllint.yml'
 
   eslint:
     name: ESLint
+    needs: [pre-test]
     runs-on: ubuntu-latest
 
     steps:
@@ -37,6 +46,7 @@ jobs:
 
   pylint:
     name: Pylint
+    needs: [pre-test]
     runs-on: ubuntu-latest
 
     steps:
@@ -51,6 +61,7 @@ jobs:
 
   reuse:
     name: REUSE Compliance
+    needs: [pre-test]
     runs-on: ubuntu-latest
 
     steps:
@@ -64,6 +75,7 @@ jobs:
 
   codespell:
     name: Codespell
+    needs: [pre-test]
     runs-on: ubuntu-latest
 
     steps:
@@ -77,6 +89,7 @@ jobs:
 
   commitlint:
     name: Commitlint
+    needs: [pre-test]
     runs-on: ubuntu-latest
 
     steps:
@@ -90,6 +103,7 @@ jobs:
 
   test-build:
     name: Test Build
+    needs: [pre-test]
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/andyholmes/gnome-shell-extension-valent:latest
