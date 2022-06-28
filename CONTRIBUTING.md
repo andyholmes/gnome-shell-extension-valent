@@ -1,4 +1,4 @@
-# Contributing to Valent
+# Contributing
 
 Thanks for thinking about contributing to Valent!
 
@@ -44,9 +44,9 @@ directory.
 
 ## Contributing Code
 
-Valent follows most of the conventions of a typical GNOME project including
-coding style, documentation and introspection, with an emphasis on automated
-testing.
+This projects follows most of the conventions of a typical GNOME project
+including coding style, documentation and introspection, with an emphasis on
+automated testing.
 
 
 ### Coding Style
