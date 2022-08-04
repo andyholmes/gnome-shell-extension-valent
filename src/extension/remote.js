@@ -99,13 +99,6 @@ var Device = GObject.registerClass({
             GObject.ParamFlags.READABLE,
             null
         ),
-        'paired': GObject.ParamSpec.boolean(
-            'paired',
-            'Paired',
-            'Whether the device is paired',
-            GObject.ParamFlags.READABLE,
-            false
-        ),
         'state': GObject.ParamSpec.int64(
             'state',
             'State',
@@ -139,7 +132,6 @@ var Device = GObject.registerClass({
                 'IconName': 'icon-name',
                 'Id': 'id',
                 'Name': 'name',
-                'Paired': 'paired',
                 'State': 'state',
                 'Type': 'type',
             };
@@ -174,10 +166,6 @@ var Device = GObject.registerClass({
 
     get name() {
         return this._get('Name', 'Unknown');
-    }
-
-    get paired() {
-        return this._get('Paired', false);
     }
 
     get state() {
