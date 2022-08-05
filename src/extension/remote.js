@@ -71,13 +71,6 @@ var Device = GObject.registerClass({
     GTypeName: 'ValentRemoteDevice',
     Implements: [Gio.DBusInterface],
     Properties: {
-        'connected': GObject.ParamSpec.boolean(
-            'connected',
-            'Connected',
-            'Whether the device is connected',
-            GObject.ParamFlags.READABLE,
-            false
-        ),
         'icon-name': GObject.ParamSpec.string(
             'icon-name',
             'Icon Name',
@@ -128,7 +121,6 @@ var Device = GObject.registerClass({
     on_g_properties_changed(changed, _invalidated) {
         try {
             const properties = {
-                'Connected': 'connected',
                 'IconName': 'icon-name',
                 'Id': 'id',
                 'Name': 'name',
@@ -150,10 +142,6 @@ var Device = GObject.registerClass({
             return value.unpack();
 
         return fallback;
-    }
-
-    get connected() {
-        return this._get('Connected', false);
     }
 
     get icon_name() {
