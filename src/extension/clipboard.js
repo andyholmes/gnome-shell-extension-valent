@@ -67,7 +67,7 @@ var Clipboard = GObject.registerClass({
         this._decoder = new TextDecoder('utf-8', { fatal: true });
         this._selection = global.display.get_selection();
         this._serviceOwner = null;
-        this._transferring = false;
+        this._transferring = null;
 
         // Watch the service
         this._nameWatcherId = Gio.DBus.watch_name(
@@ -91,15 +91,13 @@ var Clipboard = GObject.registerClass({
         if (this._transferring)
             return;
 
-        this._transferring = true;
-
         /* We need to put our signal emission in an idle callback to ensure that
          * Mutter's internal calls have finished resolving in the loop, or else
          * we'll end up with the previous selection's content.
          */
-        GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
+        this._transferring = GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
             this.emit_signal('Changed', null);
-            this._transferring = false;
+            this._transferring = null;
 
             return GLib.SOURCE_REMOVE;
         });
@@ -349,6 +347,11 @@ var Clipboard = GObject.registerClass({
     }
 
     destroy() {
+        if (this._transferring) {
+            GLib.Source.remove(this._transferring);
+            this._transferring = null;
+        }
+
         if (this._nameWatcherId) {
             Gio.bus_unwatch_name(this._nameWatcherId);
             this._nameWatcherId = 0;
