@@ -64,6 +64,7 @@ var Clipboard = GObject.registerClass({
     constructor() {
         super({ g_interface_info: DBUS_INFO });
 
+        this._cancellable = new Gio.Cancellable();
         this._decoder = new TextDecoder('utf-8', { fatal: true });
         this._selection = global.display.get_selection();
         this._serviceOwner = null;
@@ -245,7 +246,8 @@ var Clipboard = GObject.registerClass({
                 this._selection.transfer_async(
                     Meta.SelectionType.SELECTION_CLIPBOARD,
                     mimetype, -1,
-                    stream, null,
+                    stream,
+                    this._cancellable,
                     (selection, res) => {
                         try {
                             selection.transfer_finish(res);
@@ -307,7 +309,8 @@ var Clipboard = GObject.registerClass({
             this._selection.transfer_async(
                 Meta.SelectionType.SELECTION_CLIPBOARD,
                 mimetype, -1,
-                stream, null,
+                stream,
+                this._cancellable,
                 (selection, res) => {
                     try {
                         selection.transfer_finish(res);
@@ -347,6 +350,9 @@ var Clipboard = GObject.registerClass({
     }
 
     destroy() {
+        if (!this._cancellable.is_cancelled())
+            this._cancellable.cancel();
+
         if (this._transferring) {
             GLib.Source.remove(this._transferring);
             this._transferring = null;
