@@ -142,8 +142,7 @@ var Clipboard = GObject.registerClass({
                 const args = DBUS_INFO.lookup_method(name).out_args;
                 retval = new GLib.Variant(
                     `(${args.map(arg => arg.signature).join('')})`,
-                    args.length === 1 ? [retval] : retval
-                );
+                    args.length === 1 ? [retval] : retval);
             }
 
             invocation.return_value(retval);
