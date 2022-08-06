@@ -57,7 +57,7 @@ function installPlugin() {
         const pluginDir = GLib.build_filenamev([targetDir, 'gnome-shell']);
 
         if (GLib.mkdir_with_parents(pluginDir, 0o755) !== 0)
-            throw Error(`Failed to create '${targetDir}`);
+            throw Error(`Failed to create '${pluginDir}`);
 
         const pluginSource = GLib.build_filenamev([sourceDir, 'gnome-shell',
             '__init__.py']);
