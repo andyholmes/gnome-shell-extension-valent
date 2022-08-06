@@ -74,28 +74,28 @@ var Device = GObject.registerClass({
         'icon-name': GObject.ParamSpec.string(
             'icon-name',
             'Icon Name',
-            'Icon name representing the device',
+            'A symbolic icon name for the device',
             GObject.ParamFlags.READABLE,
             null
         ),
         'id': GObject.ParamSpec.string(
             'id',
             'ID',
-            'The unique ID of the device',
+            'A unique ID for the device',
             GObject.ParamFlags.READABLE,
-            ''
+            null
         ),
         'name': GObject.ParamSpec.string(
             'name',
             'Name',
-            'The device name',
+            'A display name for the device',
             GObject.ParamFlags.READABLE,
             null
         ),
-        'state': GObject.ParamSpec.int64(
+        'state': GObject.ParamSpec.uint(
             'state',
             'State',
-            'The state of the device.',
+            'The state of the device',
             GObject.ParamFlags.READABLE,
             DeviceState.NONE, DeviceState.CONNECTED | DeviceState.PAIRED_OUTGOING,
             DeviceState.NONE
@@ -103,7 +103,7 @@ var Device = GObject.registerClass({
         'type': GObject.ParamSpec.string(
             'type',
             'Type',
-            'The device type',
+            'A string hint, indicating the form-factor of the device',
             GObject.ParamFlags.READABLE,
             null
         ),
@@ -145,15 +145,15 @@ var Device = GObject.registerClass({
     }
 
     get icon_name() {
-        return this._get('IconName', 'computer');
+        return this._get('IconName', 'computer-symbolic');
     }
 
     get id() {
-        return this._get('Id', '0');
+        return this._get('Id', null);
     }
 
     get name() {
-        return this._get('Name', 'Unknown');
+        return this._get('Name', null);
     }
 
     get state() {
