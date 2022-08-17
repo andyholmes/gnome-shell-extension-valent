@@ -16,6 +16,14 @@ const DBUS_INFO = Gio.DBusInterfaceInfo.new_for_xml(`
 <node>
   <interface name="org.gnome.Shell.Extensions.Valent.Clipboard">
     <!-- Methods -->
+    <method name="GetBytes">
+      <arg direction="in" type="s" name="mimetype"/>
+      <arg direction="out" type="ay" name="data"/>
+    </method>
+    <method name="SetBytes">
+      <arg direction="in" type="s" name="mimetype"/>
+      <arg direction="in" type="ay" name="data"/>
+    </method>
     <method name="GetMimetypes">
       <arg direction="out" type="as" name="mimetypes"/>
     </method>
@@ -25,17 +33,11 @@ const DBUS_INFO = Gio.DBusInterfaceInfo.new_for_xml(`
     <method name="SetText">
       <arg direction="in" type="s" name="text"/>
     </method>
-    <method name="GetValue">
-      <arg direction="in" type="s" name="mimetype"/>
-      <arg direction="out" type="ay" name="value"/>
-    </method>
-    <method name="SetValue">
-      <arg direction="in" type="ay" name="value"/>
-      <arg direction="in" type="s" name="mimetype"/>
-    </method>
 
     <!-- Signals -->
-    <signal name="Changed"/>
+    <signal name="Changed">
+      <arg type="a{sv}" name="metadata"/>
+    </signal>
   </interface>
 </node>
 `);
@@ -80,7 +82,7 @@ var Clipboard = GObject.registerClass({
         );
     }
 
-    _onChanged(selection, type, _source) {
+    _onOwnerChanged(selection, type, _source) {
         /* We're only interested in the standard clipboard */
         if (type !== Meta.SelectionType.SELECTION_CLIPBOARD)
             return;
@@ -97,7 +99,12 @@ var Clipboard = GObject.registerClass({
          * we'll end up with the previous selection's content.
          */
         this._transferring = GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
-            this.emit_signal('Changed', null);
+            const mimetypes = this._selection.get_mimetypes(
+                Meta.SelectionType.SELECTION_CLIPBOARD);
+            this.emit_signal('Changed', new GLib.Variant('(a{sv})', [{
+                mimetypes: GLib.Variant.new_strv(mimetypes),
+                timestamp: GLib.Variant.new_int64(Date.now()),
+            }]));
             this._transferring = null;
 
             return GLib.SOURCE_REMOVE;
@@ -180,7 +187,7 @@ var Clipboard = GObject.registerClass({
     _onBusAcquired(connection, _name) {
         try {
             this._ownerChangedId = this._selection.connect('owner-changed',
-                this._onChanged.bind(this));
+                this._onOwnerChanged.bind(this));
 
             this._handleMethodCallId = this.connect('handle-method-call',
                 this._onHandleMethodCall.bind(this));
@@ -210,7 +217,60 @@ var Clipboard = GObject.registerClass({
     }
 
     /**
-     * Get the available mimetypes of the current clipboard content
+     * Get the content of the clipboard.
+     *
+     * @param {string} mimetype - the mimetype to request
+     * @returns {Promise<Uint8Array>} - The content of the clipboard
+     */
+    GetBytes(mimetype) {
+        return new Promise((resolve, reject) => {
+            const stream = Gio.MemoryOutputStream.new_resizable();
+
+            this._selection.transfer_async(
+                Meta.SelectionType.SELECTION_CLIPBOARD,
+                mimetype, -1,
+                stream,
+                this._cancellable,
+                (selection, res) => {
+                    try {
+                        selection.transfer_finish(res);
+
+                        const bytes = stream.steal_as_bytes();
+
+                        resolve(bytes.get_data());
+                    } catch (e) {
+                        reject(e);
+                    }
+                }
+            );
+        });
+    }
+
+    /**
+     * Set the content of the clipboard.
+     *
+     * @param {string} mimetype - the mimetype of the data
+     * @param {Uint8Array} data - the data to set
+     * @returns {Promise} - A promise for the operation
+     */
+    SetBytes(mimetype, data) {
+        return new Promise((resolve, reject) => {
+            try {
+                const source = Meta.SelectionSourceMemory.new(mimetype,
+                    GLib.Bytes.new(data));
+
+                this._selection.set_owner(
+                    Meta.SelectionType.SELECTION_CLIPBOARD, source);
+
+                resolve();
+            } catch (e) {
+                reject(e);
+            }
+        });
+    }
+
+    /**
+     * Get the content mimetypes of the clipboard.
      *
      * @returns {Promise<string[]>} - A list of mime-types
      */
@@ -228,7 +288,7 @@ var Clipboard = GObject.registerClass({
     }
 
     /**
-     * Get the text content of the clipboard
+     * Get the text content of the clipboard.
      *
      * @returns {Promise<string>} - Text content of the clipboard
      */
@@ -267,7 +327,7 @@ var Clipboard = GObject.registerClass({
     }
 
     /**
-     * Set the text content of the clipboard
+     * Set the text content of the clipboard.
      *
      * @param {string} text - text content to set
      * @returns {Promise} - A promise for the operation
@@ -284,59 +344,6 @@ var Clipboard = GObject.registerClass({
 
                 const source = Meta.SelectionSourceMemory.new(
                     'text/plain;charset=utf-8', GLib.Bytes.new(text));
-
-                this._selection.set_owner(
-                    Meta.SelectionType.SELECTION_CLIPBOARD, source);
-
-                resolve();
-            } catch (e) {
-                reject(e);
-            }
-        });
-    }
-
-    /**
-     * Get the content of the clipboard with the type @mimetype.
-     *
-     * @param {string} mimetype - the mimetype to request
-     * @returns {Promise<Uint8Array>} - The content of the clipboard
-     */
-    GetValue(mimetype) {
-        return new Promise((resolve, reject) => {
-            const stream = Gio.MemoryOutputStream.new_resizable();
-
-            this._selection.transfer_async(
-                Meta.SelectionType.SELECTION_CLIPBOARD,
-                mimetype, -1,
-                stream,
-                this._cancellable,
-                (selection, res) => {
-                    try {
-                        selection.transfer_finish(res);
-
-                        const bytes = stream.steal_as_bytes();
-
-                        resolve(bytes.get_data());
-                    } catch (e) {
-                        reject(e);
-                    }
-                }
-            );
-        });
-    }
-
-    /**
-     * Set the content of the clipboard to @value with the type @mimetype.
-     *
-     * @param {Uint8Array} value - the value to set
-     * @param {string} mimetype - the mimetype of the value
-     * @returns {Promise} - A promise for the operation
-     */
-    SetValue(value, mimetype) {
-        return new Promise((resolve, reject) => {
-            try {
-                const source = Meta.SelectionSourceMemory.new(mimetype,
-                    GLib.Bytes.new(value));
 
                 this._selection.set_owner(
                     Meta.SelectionType.SELECTION_CLIPBOARD, source);
