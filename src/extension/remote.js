@@ -354,7 +354,7 @@ var Service = GObject.registerClass({
             'ActivateAction',
             new GLib.Variant('(sava{sv})', [name, paramArray, {}]),
             null,
-            Gio.DBusCallFlags.NO_AUTO_START,
+            Gio.DBusCallFlags.NONE,
             -1,
             this._cancellable,
             (connection, res) => {
