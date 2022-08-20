@@ -49,10 +49,11 @@ var Battery = GObject.registerClass({
         ),
     },
 }, class Battery extends St.BoxLayout {
-    constructor(params) {
-        super(Object.assign({
+    constructor(params = {}) {
+        super({
             style_class: 'valent-device-battery',
-        }, params));
+            ...params,
+        });
 
         // Percentage Label
         this._label = new St.Label({
