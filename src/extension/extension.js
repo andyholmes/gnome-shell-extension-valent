@@ -85,13 +85,10 @@ const ServiceIndicator = GObject.registerClass({
 
         // Service Proxy
         this.service = new Remote.Service();
-
         this._deviceAddedId = this.service.connect('device-added',
             this._onDeviceAdded.bind(this));
-
         this._deviceRemovedId = this.service.connect('device-removed',
             this._sync.bind(this));
-
         this._serviceChangedId = this.service.connect('notify::active',
             this._onServiceChanged.bind(this));
 
@@ -128,6 +125,33 @@ const ServiceIndicator = GObject.registerClass({
         this.service.reload();
     }
 
+    _onDestroy(actor) {
+        if (actor.service) {
+            actor.service.disconnect(actor._serviceChangedId);
+            actor.service.disconnect(actor._deviceAddedId);
+            actor.service.disconnect(actor._deviceRemovedId);
+            actor.service.destroy();
+        }
+
+        actor.menu.destroy();
+    }
+
+    _onDeviceAdded(service_, device) {
+        device.connect('notify::state', this._sync.bind(this));
+        this._sync();
+    }
+
+    _onServiceChanged(_service, _pspec) {
+        if (this.service.active)
+            // TRANSLATORS: A menu option to deactivate the service
+            this._toggleItem.label.text = _('Turn Off');
+        else
+            // TRANSLATORS: A menu option to activate the service
+            this._toggleItem.label.text = _('Turn On');
+
+        this._sync();
+    }
+
     async _onToggleItemActivate() {
         try {
             if (this.service.active)
@@ -145,7 +169,6 @@ const ServiceIndicator = GObject.registerClass({
                    (device.state & Remote.DeviceState.PAIRED) !== 0;
         });
 
-        // Hide status indicator if no devices are available
         this._indicator.visible = available.length > 0;
         this._item.battery.visible = available.length === 1;
 
@@ -167,33 +190,6 @@ const ServiceIndicator = GObject.registerClass({
             this._item.label.text = _('Off');
             this._item.battery.device = null;
         }
-    }
-
-    _onDeviceAdded(service_, device) {
-        device.connect('notify::state', this._sync.bind(this));
-        this._sync();
-    }
-
-    _onServiceChanged(_service, _pspec) {
-        if (this.service.active)
-            // TRANSLATORS: A menu option to deactivate the service
-            this._toggleItem.label.text = _('Turn Off');
-        else
-            // TRANSLATORS: A menu option to activate the service
-            this._toggleItem.label.text = _('Turn On');
-
-        this._sync();
-    }
-
-    _onDestroy(actor) {
-        if (actor.service) {
-            actor.service.disconnect(actor._serviceChangedId);
-            actor.service.disconnect(actor._deviceAddedId);
-            actor.service.disconnect(actor._deviceRemovedId);
-            actor.service.destroy();
-        }
-
-        actor.menu.destroy();
     }
 });
 
@@ -237,3 +233,4 @@ function disable() {
         clipboardInterface = null;
     }
 }
+
