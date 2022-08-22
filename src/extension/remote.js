@@ -110,9 +110,10 @@ var Device = GObject.registerClass({
     },
 }, class Device extends Gio.DBusProxy {
     constructor(params = {}) {
-        super(Object.assign({
+        super({
             g_interface_name: 'ca.andyholmes.Valent.Device',
-        }, params));
+            ...params,
+        });
 
         this.action_group = Gio.DBusActionGroup.get(this.g_connection,
             this.g_name, this.g_object_path);
