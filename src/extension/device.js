@@ -3,7 +3,7 @@
 
 /* exported Battery */
 
-const { Clutter, Gio, GObject, Pango, St } = imports.gi;
+const { Clutter, Gio, GObject, St } = imports.gi;
 
 const ExtensionUtils = imports.misc.extensionUtils;
 const Extension = ExtensionUtils.getCurrentExtension();
@@ -59,10 +59,8 @@ var Battery = GObject.registerClass({
         this._label = new St.Label({
             y_align: Clutter.ActorAlign.CENTER,
         });
-        this._label.clutter_text.ellipsize = Pango.EllipsizeMode.NONE;
-
-        this.set_label_actor(this._label);
         this.add_child(this._label);
+        this.label_actor = this._label;
 
         // Battery Icon
         this._icon = new St.Icon({
