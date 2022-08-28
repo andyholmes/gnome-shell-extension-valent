@@ -12,6 +12,6 @@ Website=https://github.com/andyholmes/gnome-shell-extension-valent
 Help=https://github.com/andyholmes/gnome-shell-extension-valent/wiki
 Hidden=false
 Loader=python3
-X-ClipboardSourcePriority=50
+X-ClipboardAdapterPriority=50
 X-SessionAdapterPriority=50
 
