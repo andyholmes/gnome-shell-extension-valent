@@ -5,6 +5,6 @@
     "gettext-domain": "@GETTEXT_DOMAIN@",
     "version": @EXTENSION_VERSION@,
     "session-modes": ["unlock-dialog", "user"],
-    "shell-version": ["42"],
+    "shell-version": ["43"],
     "url": "https://github.com/andyholmes/gnome-shell-extension-valent"
 }

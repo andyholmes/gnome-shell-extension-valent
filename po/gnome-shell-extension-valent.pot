@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gnome-shell-extension-valent\n"
 "Report-Msgid-Bugs-To: https://github.com/andyholmes/gnome-shell-extension-"
 "valent/issues\n"
-"POT-Creation-Date: 2022-06-15 00:26-0700\n"
+"POT-Creation-Date: 2022-08-20 18:12-0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -19,38 +19,27 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 
-#. TRANSLATORS: The service is inactive
-#: src/extension/extension.js:106 src/extension/extension.js:168
-msgid "Off"
+#. TRANSLATORS: The quick settings item label
+#: src/extension/extension.js:89 src/extension/extension.js:180
+msgid "Valent"
 msgstr ""
 
-#. TRANSLATORS: A menu option to activate the service
-#: src/extension/extension.js:121 src/extension/extension.js:220
-msgid "Turn On"
+#: src/extension/extension.js:98
+msgid "Device Connections"
 msgstr ""
 
 #. TRANSLATORS: A menu option to open the service settings
-#: src/extension/extension.js:125
+#: src/extension/extension.js:106
 msgid "Valent Settings"
 msgstr ""
 
 #. TRANSLATORS: %d is the number of devices connected
-#: src/extension/extension.js:159
+#: src/extension/extension.js:176
 #, javascript-format
 msgid "%d Connected"
 msgid_plural "%d Connected"
 msgstr[0] ""
 msgstr[1] ""
-
-#. TRANSLATORS: The service is active
-#: src/extension/extension.js:164
-msgid "On"
-msgstr ""
-
-#. TRANSLATORS: A menu option to deactivate the service
-#: src/extension/extension.js:217
-msgid "Turn Off"
-msgstr ""
 
 #. TRANSLATORS: A notification button to show the quick-reply entry
 #: src/extension/notification.js:59
