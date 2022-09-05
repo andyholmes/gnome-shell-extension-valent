@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2022 Andy Holmes <andrew.g.r.holmes@gmail.com>
 
-/* exported Battery */
+/* exported MenuItem */
 
 const { Clutter, Gio, GObject, St } = imports.gi;
+
+const PopupMenu = imports.ui.popupMenu;
 
 const ExtensionUtils = imports.misc.extensionUtils;
 const Extension = ExtensionUtils.getCurrentExtension();
@@ -37,7 +39,7 @@ function _getBatteryIcon(percentage, charging) {
 /**
  * A battery widget with an icon and text percentage.
  */
-var Battery = GObject.registerClass({
+const Battery = GObject.registerClass({
     GTypeName: 'ValentDeviceBattery',
     Properties: {
         'device': GObject.ParamSpec.object(
@@ -153,6 +155,72 @@ var Battery = GObject.registerClass({
         }
 
         this._onActionChanged(device?.action_group, 'battery.state');
+    }
+});
+
+
+/**
+ * A menu item for devices.
+ */
+var MenuItem = GObject.registerClass({
+    GTypeName: 'ValentDeviceMenuItem',
+    Properties: {
+        'device': GObject.ParamSpec.object(
+            'device',
+            'Device',
+            'The remote device',
+            GObject.ParamFlags.READWRITE,
+            Remote.Device.$gtype
+        ),
+    },
+}, class DeviceMenuItem extends PopupMenu.PopupBaseMenuItem {
+    constructor(device) {
+        super();
+
+        // Workaround parameter parsing
+        this.device = device;
+        this._activatable = false;
+
+        this._icon = new St.Icon({
+            fallback_icon_name: 'computer-symbolic',
+            style_class: 'popup-menu-icon',
+        });
+        this.add_child(this._icon);
+
+        this._label = new St.Label({
+            x_expand: true,
+            y_expand: true,
+            y_align: Clutter.ActorAlign.CENTER,
+        });
+        this.add_child(this._label);
+        this.label_actor = this._label;
+
+        this._battery = new Battery({ visible: false });
+        this.add_child(this._battery);
+
+        this.bind_property('device', this._battery, 'device',
+            GObject.BindingFlags.SYNC_CREATE);
+        this.device.bind_property('icon-name', this._icon, 'icon-name',
+            GObject.BindingFlags.SYNC_CREATE);
+        this.device.bind_property('name', this._label, 'text',
+            GObject.BindingFlags.SYNC_CREATE);
+        this._stateChangedId = this.device.connect('notify::state',
+            this._sync.bind(this));
+
+        this._sync(this.device);
+        this.connect('destroy', this._onDestroy);
+    }
+
+    _onDestroy(actor) {
+        if (actor.device === null)
+            return;
+
+        actor.device.disconnect(actor._stateChangedId);
+    }
+
+    _sync(device) {
+        this.visible = (device.state & Remote.DeviceState.CONNECTED) !== 0 &&
+                       (device.state & Remote.DeviceState.PAIRED) !== 0;
     }
 });
 

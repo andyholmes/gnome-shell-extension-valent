@@ -1,16 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2022 Andy Holmes <andrew.g.r.holmes@gmail.com>
-// SPDX-FileContributor: Michael Pobega <pobega@gmail.com>
-// SPDX-FileContributor: McModder <me@modder.pw>
 
 /* exported init, enable, disable */
 
-const { GLib, GObject, Pango } = imports.gi;
+const { GLib, GObject } = imports.gi;
 
 const Main = imports.ui.main;
-const PanelMenu = imports.ui.panelMenu;
 const PopupMenu = imports.ui.popupMenu;
-const AggregateMenu = Main.panel.statusArea.aggregateMenu;
+const QuickSettings = imports.ui.quickSettings;
+const QuickSettingsMenu = Main.panel.statusArea.quickSettings;
 
 const ExtensionUtils = imports.misc.extensionUtils;
 const Extension = ExtensionUtils.getCurrentExtension();
@@ -72,12 +70,126 @@ function installPlugin() {
 
 
 /**
+ * The quick settings menu for Valent.
+ */
+const ServiceMenuToggle = GObject.registerClass({
+    GTypeName: 'ValentServiceMenuToggle',
+    Properties: {
+        'service': GObject.ParamSpec.object(
+            'service',
+            'Service',
+            'The remote service',
+            GObject.ParamFlags.READWRITE,
+            Remote.Service.$gtype
+        ),
+    },
+}, class ServiceToggle extends QuickSettings.QuickMenuToggle {
+    constructor(params = {}) {
+        super({
+            label: _('Valent'),
+            icon_name: 'ca.andyholmes.Valent-symbolic',
+            toggle_mode: true,
+            ...params,
+        });
+
+        this._items = new Map();
+
+        this.menu.setHeader('ca.andyholmes.Valent-symbolic',
+            _('Device Connections'));
+
+        this._itemsSection = new PopupMenu.PopupMenuSection();
+        this.menu.addMenuItem(this._itemsSection);
+
+        this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+
+        // TRANSLATORS: A menu option to open the service settings
+        const settingsItem = this.menu.addAction(_('Valent Settings'),
+            this._onSettingsActivated.bind(this));
+        settingsItem.visible = Main.sessionMode.allowSettings;
+        this.menu._settingsActions['ca.andyholme.Valent.desktop'] = settingsItem;
+
+        this.service.bind_property('active', this, 'checked',
+            GObject.BindingFlags.SYNC_CREATE);
+        this._deviceAddedId = this.service.connect('device-added',
+            this._onDeviceAdded.bind(this));
+        this._deviceRemovedId = this.service.connect('device-removed',
+            this._onDeviceRemoved.bind(this));
+
+        this.connect('destroy', this._onDestroy);
+    }
+
+    vfunc_clicked(_clickedButton) {
+        console.debug('toggling service');
+
+        if (this.service.active)
+            this.service.stop().catch(logError);
+        else
+            this.service.start().catch(logError);
+    }
+
+    _onDestroy(actor) {
+        if (actor._deviceAddedId)
+            actor.service.disconnect(actor._deviceAddedId);
+
+        if (actor._deviceRemovedId)
+            actor.service.disconnect(actor._deviceRemovedId);
+    }
+
+    _onDeviceAdded(service_, device) {
+        const item = new Device.MenuItem(device);
+
+        this._items.set(device, item);
+        this._itemsSection.addMenuItem(item);
+
+        this._sync();
+    }
+
+    _onDeviceRemoved(service_, device) {
+        const item = this._items.get(device);
+
+        if (item) {
+            this._items.delete(device);
+            item.destroy();
+        }
+
+        this._sync();
+    }
+
+    _onSettingsActivated(_event) {
+        this.service.activate_action('preferences');
+
+        Main.overview.hide();
+        Main.panel.closeQuickSettings();
+    }
+
+    _sync() {
+        const available = this.service.devices.filter(device => {
+            return (device.state & Remote.DeviceState.CONNECTED) !== 0 &&
+                   (device.state & Remote.DeviceState.PAIRED) !== 0;
+        });
+        const nAvailableDevices = available.length;
+
+        if (nAvailableDevices === 1) {
+            this.label = available[0].name;
+        } else if (nAvailableDevices > 0) {
+            // TRANSLATORS: %d is the number of devices connected
+            this.label = ngettext('%d Connected', '%d Connected',
+                available.length).format(available.length);
+        } else {
+            // TRANSLATORS: The quick settings item label
+            this.label = _('Valent');
+        }
+    }
+});
+
+
+/**
  * A System Indicator that's visible in the panel when devices are connected,
  * with menu items to start or stop the service and open the settings.
  */
 const ServiceIndicator = GObject.registerClass({
     GTypeName: 'ValentServiceIndicator',
-}, class ServiceIndicator extends PanelMenu.SystemIndicator {
+}, class ServiceIndicator extends QuickSettings.SystemIndicator {
     constructor() {
         super();
 
@@ -89,37 +201,19 @@ const ServiceIndicator = GObject.registerClass({
             this._onDeviceAdded.bind(this));
         this._deviceRemovedId = this.service.connect('device-removed',
             this._sync.bind(this));
-        this._serviceChangedId = this.service.connect('notify::active',
-            this._onServiceChanged.bind(this));
 
         // Service Indicator
         this._indicator = this._addIndicator();
         this._indicator.icon_name = 'ca.andyholmes.Valent-symbolic';
         this._indicator.visible = false;
-        AggregateMenu._indicators.insert_child_at_index(this, 0);
+        QuickSettingsMenu._indicators.insert_child_at_index(this, 0);
 
-        // TRANSLATORS: The service is inactive
-        this._item = new PopupMenu.PopupSubMenuMenuItem(_('Off'), true);
-        this._item.icon.gicon = this._indicator.gicon;
-        this._item.label.clutter_text.x_expand = true;
-        this._item.label.ellipsize = Pango.EllipsizeMode.END;
-        this._item.battery = new Device.Battery();
-        this._item.insert_child_below(this._item.battery,
-            this._item._triangleBin);
-        this.menu.addMenuItem(this._item);
-
-        // Try to place our menu below the network menu
-        const menuItems = AggregateMenu.menu._getMenuItems();
-        let networkIndex = menuItems.indexOf(AggregateMenu._network?.menu);
-        AggregateMenu.menu.addMenuItem(this.menu, ++networkIndex || 4);
-
-        // TRANSLATORS: A menu option to activate the service
-        this._toggleItem = this._item.menu.addAction(_('Turn On'),
-            this._onToggleItemActivate.bind(this));
-
-        // TRANSLATORS: A menu option to open the service settings
-        this._item.menu.addAction(_('Valent Settings'),
-            () => this.service.activate_action('preferences', null));
+        // Service Toggle
+        const menuToggle = new ServiceMenuToggle({
+            service: this.service,
+        });
+        this.quickSettingsItems.push(menuToggle);
+        QuickSettingsMenu._addItems(this.quickSettingsItems);
 
         // Prime the service
         this.service.reload();
@@ -127,40 +221,17 @@ const ServiceIndicator = GObject.registerClass({
 
     _onDestroy(actor) {
         if (actor.service) {
-            actor.service.disconnect(actor._serviceChangedId);
             actor.service.disconnect(actor._deviceAddedId);
             actor.service.disconnect(actor._deviceRemovedId);
             actor.service.destroy();
         }
 
-        actor.menu.destroy();
+        actor.quickSettingsItems.forEach(item => item.destroy());
     }
 
     _onDeviceAdded(service_, device) {
         device.connect('notify::state', this._sync.bind(this));
         this._sync();
-    }
-
-    _onServiceChanged(_service, _pspec) {
-        if (this.service.active)
-            // TRANSLATORS: A menu option to deactivate the service
-            this._toggleItem.label.text = _('Turn Off');
-        else
-            // TRANSLATORS: A menu option to activate the service
-            this._toggleItem.label.text = _('Turn On');
-
-        this._sync();
-    }
-
-    async _onToggleItemActivate() {
-        try {
-            if (this.service.active)
-                await this.service.stop();
-            else
-                await this.service.start();
-        } catch (e) {
-            logError(e, 'Valent');
-        }
     }
 
     _sync() {
@@ -170,26 +241,6 @@ const ServiceIndicator = GObject.registerClass({
         });
 
         this._indicator.visible = available.length > 0;
-        this._item.battery.visible = available.length === 1;
-
-        if (available.length === 1) {
-            const device = available[0];
-            this._item.label.text = device.name;
-            this._item.battery.device = device;
-        } else if (available.length > 0) {
-            // TRANSLATORS: %d is the number of devices connected
-            this._item.label.text = ngettext('%d Connected', '%d Connected',
-                available.length).format(available.length);
-            this._item.battery.device = null;
-        } else if (this.service.active) {
-            // TRANSLATORS: The service is active
-            this._item.label.text = _('On');
-            this._item.battery.device = null;
-        } else {
-            // TRANSLATORS: The service is inactive
-            this._item.label.text = _('Off');
-            this._item.battery.device = null;
-        }
     }
 });
 
