@@ -202,9 +202,9 @@ var Service = GObject.registerClass({
             g_flags: Gio.DBusProxyFlags.DO_NOT_AUTO_START_AT_CONSTRUCTION,
         });
 
+        this._activating = false;
         this._cancellable = new Gio.Cancellable();
         this._devices = new Map();
-        this._starting = false;
 
         this._nameOwnerChangedId = this.connect('notify::g-name-owner',
             this._onNameOwnerChanged.bind(this));
@@ -337,68 +337,12 @@ var Service = GObject.registerClass({
     }
 
     /**
-     * Activate a service action.
-     *
-     * @param {string} name - An action name
-     * @param {GLib.Variant} [parameter] - An action parameter
+     * Activate the service.
      */
-    activate_action(name, parameter = null) {
-        const paramArray = [];
-
-        if (parameter instanceof GLib.Variant)
-            paramArray[0] = parameter;
-
-        Gio.DBus.session.call(
-            APPLICATION_ID,
-            APPLICATION_PATH,
-            'org.freedesktop.Application',
-            'ActivateAction',
-            new GLib.Variant('(sava{sv})', [name, paramArray, {}]),
-            null,
-            Gio.DBusCallFlags.NONE,
-            -1,
-            this._cancellable,
-            (connection, res) => {
-                try {
-                    connection.call_finish(res);
-                } catch (e) {
-                    logError(e);
-                }
-            }
-        );
-    }
-
-    /**
-     * Reload any managed devices, without affecting the the state of the
-     * service.
-     *
-     * This should typically be called after construction to sync with the
-     * current state of the service.
-     */
-    async reload() {
+    async activate() {
         try {
-            if (this._starting === false) {
-                this._starting = true;
-
-                this._unloadDevices();
-                await _proxyInit(this, this._cancellable);
-                await this._onNameOwnerChanged();
-
-                this._starting = false;
-            }
-        } catch (e) {
-            this._starting = false;
-            throw e;
-        }
-    }
-
-    /**
-     * Start the service
-     */
-    async start() {
-        try {
-            if (this._starting === false && this.active === false) {
-                this._starting = true;
+            if (this._activating === false && this.active === false) {
+                this._activating = true;
 
                 await _proxyInit(this, this._cancellable);
                 await this._onNameOwnerChanged();
@@ -439,20 +383,103 @@ var Service = GObject.registerClass({
                     }
                 }
 
-                this._starting = false;
+                this._activating = false;
             }
         } catch (e) {
-            this._starting = false;
-            throw e;
+            this._activating = false;
+
+            if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
+                logError(e);
         }
     }
 
     /**
-     * Stop the service
+     * Activate a service action.
+     *
+     * @param {string} name - An action name
+     * @param {GLib.Variant} [target] - An action target
      */
-    stop() {
-        if (this.active)
-            this.activate_action('quit');
+    activate_action(name, target = null) {
+        const parameters = [];
+
+        if (target instanceof GLib.Variant)
+            parameters[0] = target;
+
+        Gio.DBus.session.call(
+            APPLICATION_ID,
+            APPLICATION_PATH,
+            'org.freedesktop.Application',
+            'ActivateAction',
+            new GLib.Variant('(sava{sv})', [name, parameters, {}]),
+            null,
+            Gio.DBusCallFlags.NONE,
+            -1,
+            this._cancellable,
+            (connection, res) => {
+                try {
+                    connection.call_finish(res);
+                } catch (e) {
+                    Gio.DBusError.strip_remote_error(e);
+
+                    if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
+                        logError(e);
+                }
+            }
+        );
+    }
+
+    /**
+     * Activate the service with files to open.
+     *
+     * @param {string[]} uris - A list of URIs to open
+     */
+    open(uris = []) {
+        Gio.DBus.session.call(
+            APPLICATION_ID,
+            APPLICATION_PATH,
+            'org.freedesktop.Application',
+            'Open',
+            new GLib.Variant('(asa{sv})', [uris, {}]),
+            null,
+            Gio.DBusCallFlags.NONE,
+            -1,
+            this._cancellable,
+            (connection, res) => {
+                try {
+                    connection.call_finish(res);
+                } catch (e) {
+                    Gio.DBusError.strip_remote_error(e);
+
+                    if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
+                        logError(e);
+                }
+            }
+        );
+    }
+
+    /**
+     * Sync with the state of the D-Bus service.
+     *
+     * This should typically be called after construction, once signal handlers
+     * have been connected.
+     */
+    async sync() {
+        try {
+            if (this._activating === false) {
+                this._activating = true;
+
+                this._unloadDevices();
+                await _proxyInit(this, this._cancellable);
+                await this._onNameOwnerChanged();
+
+                this._activating = false;
+            }
+        } catch (e) {
+            this._activating = false;
+
+            if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
+                logError(e);
+        }
     }
 
     /**
@@ -466,6 +493,7 @@ var Service = GObject.registerClass({
             this._nameOwnerChangedId = 0;
 
             this._unloadDevices();
+            this._activating = true;
             this._active = false;
         }
     }
