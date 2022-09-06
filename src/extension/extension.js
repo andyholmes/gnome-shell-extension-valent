@@ -122,7 +122,7 @@ const ServiceIndicator = GObject.registerClass({
             () => this.service.activate_action('preferences', null));
 
         // Prime the service
-        this.service.reload();
+        this.service.sync();
     }
 
     _onDestroy(actor) {
@@ -152,15 +152,11 @@ const ServiceIndicator = GObject.registerClass({
         this._sync();
     }
 
-    async _onToggleItemActivate() {
-        try {
-            if (this.service.active)
-                await this.service.stop();
-            else
-                await this.service.start();
-        } catch (e) {
-            logError(e, 'Valent');
-        }
+    _onToggleItemActivate() {
+        if (this.service.active)
+            this.service.activate_action('quit');
+        else
+            this.service.activate();
     }
 
     _sync() {
