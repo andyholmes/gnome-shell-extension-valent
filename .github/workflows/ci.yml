@@ -106,7 +106,7 @@ jobs:
     needs: [pre-test]
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/andyholmes/gnome-shell-extension-valent:latest
+      image: ghcr.io/${{ github.repository }}:latest
 
     steps:
       - name: Checkout
