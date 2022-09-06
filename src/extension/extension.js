@@ -122,9 +122,9 @@ const ServiceMenuToggle = GObject.registerClass({
         console.debug('toggling service');
 
         if (this.service.active)
-            this.service.stop().catch(logError);
+            this.service.activate_action('quit');
         else
-            this.service.start().catch(logError);
+            this.service.activate();
     }
 
     _onDestroy(actor) {
@@ -216,7 +216,7 @@ const ServiceIndicator = GObject.registerClass({
         QuickSettingsMenu._addItems(this.quickSettingsItems);
 
         // Prime the service
-        this.service.reload();
+        this.service.sync();
     }
 
     _onDestroy(actor) {
