@@ -3,10 +3,10 @@
 
 extension_sources = [
   'clipboard.js',
-  'device.js',
   'extension.js',
   'notification.js',
   'remote.js',
+  'status.js',
   'stylesheet.css',
 ]
 
@@ -23,6 +23,10 @@ metadata_json = configure_file(
 
 install_data(extension_sources,
              metadata_json,
+  install_dir: join_paths(extensionsdir, extuuid),
+)
+
+install_subdir('data',
   install_dir: join_paths(extensionsdir, extuuid),
 )
 

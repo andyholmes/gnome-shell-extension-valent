@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gnome-shell-extension-valent\n"
 "Report-Msgid-Bugs-To: https://github.com/andyholmes/gnome-shell-extension-"
 "valent/issues\n"
-"POT-Creation-Date: 2022-08-20 18:12-0700\n"
+"POT-Creation-Date: 2022-09-06 13:49-0700\n"
 "PO-Revision-Date: 2022-01-16 01:10-0800\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -17,28 +17,6 @@ msgstr ""
 "Content-Type: text/plain; charset=ASCII\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-
-#. TRANSLATORS: The quick settings item label
-#: src/extension/extension.js:89 src/extension/extension.js:180
-msgid "Valent"
-msgstr ""
-
-#: src/extension/extension.js:98
-msgid "Device Connections"
-msgstr ""
-
-#. TRANSLATORS: A menu option to open the service settings
-#: src/extension/extension.js:106
-msgid "Valent Settings"
-msgstr "Valent Settings"
-
-#. TRANSLATORS: %d is the number of devices connected
-#: src/extension/extension.js:176
-#, javascript-format
-msgid "%d Connected"
-msgid_plural "%d Connected"
-msgstr[0] "%d Connected"
-msgstr[1] "%d Connected"
 
 #. TRANSLATORS: A notification button to show the quick-reply entry
 #: src/extension/notification.js:59
@@ -49,3 +27,25 @@ msgstr "Reply"
 #: src/extension/notification.js:69
 msgid "Type a message"
 msgstr "Type a message"
+
+#. TRANSLATORS: The quick settings item label
+#: src/extension/status.js:248 src/extension/status.js:342
+msgid "Valent"
+msgstr ""
+
+#: src/extension/status.js:259
+msgid "Device Connections"
+msgstr ""
+
+#. TRANSLATORS: A menu option to open the service settings
+#: src/extension/status.js:268
+msgid "Valent Settings"
+msgstr "Valent Settings"
+
+#. TRANSLATORS: %d is the number of devices connected
+#: src/extension/status.js:338
+#, javascript-format
+msgid "%d Connected"
+msgid_plural "%d Connected"
+msgstr[0] "%d Connected"
+msgstr[1] "%d Connected"
