@@ -185,7 +185,6 @@ const DeviceMenuItem = GObject.registerClass({
 
         // Workaround parameter parsing
         this.device = device;
-        this._activatable = false;
 
         this._icon = new St.Icon({
             fallback_icon_name: 'computer-symbolic',
@@ -292,8 +291,14 @@ const MenuToggle = GObject.registerClass({
         this.service.disconnect(this._deviceRemovedId);
     }
 
+    _onDeviceActivated(item) {
+        const target = item.device.get_cached_property('Id');
+        this.service.activate_action('window', target);
+    }
+
     _onDeviceAdded(_service, device) {
         const menuItem = new DeviceMenuItem(device);
+        menuItem.connect('activate', this._onDeviceActivated.bind(this));
         this._devicesSection.addMenuItem(menuItem);
 
         const stateChangedId = device.connect('notify::state',
