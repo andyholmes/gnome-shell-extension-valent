@@ -264,11 +264,9 @@ const MenuToggle = GObject.registerClass({
 
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
-        // TRANSLATORS: A menu option to open the service settings
-        const settingsItem = this.menu.addAction(_('Valent Settings'),
-            this._onSettingsActivated.bind(this));
-        settingsItem.visible = Main.sessionMode.allowSettings;
-        this.menu._settingsActions['ca.andyholme.Valent.desktop'] = settingsItem;
+        // TRANSLATORS: A menu option to open the main window
+        this.menu.addSettingsAction(_('All Devices'),
+            'ca.andyholmes.Valent.desktop');
 
         this._activeChangedId = this.service.connect('notify::active',
             this._sync.bind(this));
@@ -316,13 +314,6 @@ const MenuToggle = GObject.registerClass({
 
         this._devices.delete(device);
         this._sync();
-    }
-
-    _onSettingsActivated(_event) {
-        this.service.activate_action('preferences');
-
-        Main.overview.hide();
-        Main.panel.closeQuickSettings();
     }
 
     _sync() {

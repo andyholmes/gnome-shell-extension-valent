@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gnome-shell-extension-valent\n"
 "Report-Msgid-Bugs-To: https://github.com/andyholmes/gnome-shell-extension-"
 "valent/issues\n"
-"POT-Creation-Date: 2022-09-06 13:49-0700\n"
+"POT-Creation-Date: 2022-09-06 22:25-0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -30,7 +30,7 @@ msgid "Type a message"
 msgstr ""
 
 #. TRANSLATORS: The quick settings item label
-#: src/extension/status.js:248 src/extension/status.js:342
+#: src/extension/status.js:248 src/extension/status.js:333
 msgid "Valent"
 msgstr ""
 
@@ -38,13 +38,13 @@ msgstr ""
 msgid "Device Connections"
 msgstr ""
 
-#. TRANSLATORS: A menu option to open the service settings
+#. TRANSLATORS: A menu option to open the main window
 #: src/extension/status.js:268
-msgid "Valent Settings"
+msgid "All Devices"
 msgstr ""
 
 #. TRANSLATORS: %d is the number of devices connected
-#: src/extension/status.js:338
+#: src/extension/status.js:329
 #, javascript-format
 msgid "%d Connected"
 msgid_plural "%d Connected"
