@@ -309,7 +309,7 @@ var Service = GObject.registerClass({
             this.call(
                 'GetManagedObjects',
                 null,
-                Gio.DBusCallFlags.NONE,
+                Gio.DBusCallFlags.DO_NOT_AUTO_START,
                 -1,
                 this._cancellable,
                 (proxy, res) => {
