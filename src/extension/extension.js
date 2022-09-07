@@ -117,9 +117,9 @@ const ServiceIndicator = GObject.registerClass({
         this._toggleItem = this._item.menu.addAction(_('Turn On'),
             this._onToggleItemActivate.bind(this));
 
-        // TRANSLATORS: A menu option to open the service settings
-        this._item.menu.addAction(_('Valent Settings'),
-            () => this.service.activate_action('preferences', null));
+        // TRANSLATORS: A menu option to open the main window
+        this._item.menu.addSettingsAction(_('All Devices'),
+            'ca.andyholmes.Valent.desktop');
 
         // Prime the service
         this.service.sync();
