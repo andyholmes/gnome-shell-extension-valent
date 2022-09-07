@@ -264,7 +264,7 @@ const MenuToggle = GObject.registerClass({
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
         // TRANSLATORS: A menu option to open the main window
-        this.menu.addSettingsAction(_('All Devices'),
+        this._serviceItem = this.menu.addSettingsAction(_('All Devices'),
             'ca.andyholmes.Valent.desktop');
 
         this._activeChangedId = this.service.connect('notify::active',
@@ -300,6 +300,9 @@ const MenuToggle = GObject.registerClass({
         const menuItem = new DeviceMenuItem(device);
         menuItem.connect('activate', this._onDeviceActivated.bind(this));
         this._devicesSection.addMenuItem(menuItem);
+
+        this._serviceItem.bind_property('visible', menuItem, 'reactive',
+            GObject.BindingFlags.SYNC_CREATE);
 
         const stateChangedId = device.connect('notify::state',
             this._sync.bind(this));
