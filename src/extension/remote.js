@@ -204,7 +204,7 @@ var Service = GObject.registerClass({
 
         this._activating = false;
         this._cancellable = new Gio.Cancellable();
-        this._devices = new Map();
+        this._devices = {};
 
         this._nameOwnerChangedId = this.connect('notify::g-name-owner',
             this._onNameOwnerChanged.bind(this));
@@ -218,7 +218,7 @@ var Service = GObject.registerClass({
     }
 
     get devices() {
-        return Array.from(this._devices.values());
+        return Object.keys(this._devices);
     }
 
     on_g_signal(senderName_, signalName, parameters) {
@@ -249,7 +249,7 @@ var Service = GObject.registerClass({
         if (Object.values(interfaces).length === 0)
             return;
 
-        if (this._devices.has(objectPath))
+        if (this._devices[objectPath])
             return;
 
         const device = new Device({
@@ -260,7 +260,7 @@ var Service = GObject.registerClass({
         });
         await _proxyInit(device, this._cancellable);
 
-        this._devices.set(objectPath, device);
+        this._devices[objectPath] = device;
         this.emit('device-added', device);
     }
 
@@ -276,12 +276,12 @@ var Service = GObject.registerClass({
             return;
 
         // Ensure this is a managed device
-        const device = this._devices.get(objectPath);
+        const device = this._devices[objectPath];
 
         if (device === undefined)
             return;
 
-        this._devices.delete(objectPath);
+        delete this._devices[objectPath];
         this.emit('device-removed', device);
     }
 
@@ -330,8 +330,8 @@ var Service = GObject.registerClass({
     }
 
     _unloadDevices() {
-        for (const [objectPath, device] of this._devices) {
-            this._devices.delete(objectPath);
+        for (const [objectPath, device] of Object.entries(this._devices)) {
+            delete this._devices[objectPath];
             this.emit('device-removed', device);
         }
     }
