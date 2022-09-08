@@ -468,7 +468,6 @@ var Service = GObject.registerClass({
             if (this._activating === false) {
                 this._activating = true;
 
-                this._unloadDevices();
                 await _proxyInit(this, this._cancellable);
                 await this._onNameOwnerChanged();
 
