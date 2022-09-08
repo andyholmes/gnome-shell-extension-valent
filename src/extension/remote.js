@@ -10,41 +10,6 @@ const APPLICATION_PATH = '/ca/andyholmes/Valent';
 
 
 /**
- * A simple wrapper for Gio.AsyncInitable.init_async().
- *
- * @param {Gio.DBusProxy} proxy - a Gio.DBusProxy
- * @param {Gio.Cancellable} [cancellable] - optional cancellable
- */
-function _proxyInit(proxy, cancellable = null) {
-    // If this has already been done, propagate the original result
-    if (proxy.__initialized === true)
-        return Promise.resolve();
-    else if (proxy.__initalized !== undefined)
-        return Promise.reject(proxy.__initialized);
-
-    return new Promise((resolve, reject) => {
-        proxy.init_async(
-            GLib.PRIORITY_DEFAULT,
-            cancellable,
-            (proxy_, res) => {
-                try {
-                    proxy.init_finish(res);
-                    proxy.__initialized = true;
-
-                    resolve();
-                } catch (e) {
-                    Gio.DBusError.strip_remote_error(e);
-                    proxy.__initialized = e;
-
-                    reject(e);
-                }
-            }
-        );
-    });
-}
-
-
-/**
  * Device state flags.
  *
  * @readonly
@@ -112,6 +77,8 @@ var Device = GObject.registerClass({
     constructor(params = {}) {
         super({
             g_interface_name: 'ca.andyholmes.Valent.Device',
+            g_flags: Gio.DBusProxyFlags.DO_NOT_AUTO_START |
+                Gio.DBusProxyFlags.DO_NOT_CONNECT_SIGNALS,
             ...params,
         });
 
@@ -199,15 +166,16 @@ var Service = GObject.registerClass({
             g_name: APPLICATION_ID,
             g_object_path: APPLICATION_PATH,
             g_interface_name: 'org.freedesktop.DBus.ObjectManager',
-            g_flags: Gio.DBusProxyFlags.DO_NOT_AUTO_START_AT_CONSTRUCTION,
+            g_flags: Gio.DBusProxyFlags.DO_NOT_AUTO_START_AT_CONSTRUCTION |
+                Gio.DBusProxyFlags.DO_NOT_LOAD_PROPERTIES,
         });
 
         this._activating = false;
         this._cancellable = new Gio.Cancellable();
-        this._devices = {};
+        this._devices = new Map();
 
-        this._nameOwnerChangedId = this.connect('notify::g-name-owner',
-            this._onNameOwnerChanged.bind(this));
+        this.init_async(GLib.PRIORITY_DEFAULT, this._cancellable,
+            this._initCallback.bind(this));
     }
 
     get active() {
@@ -218,179 +186,161 @@ var Service = GObject.registerClass({
     }
 
     get devices() {
-        return Object.keys(this._devices);
+        return Array.from(this._devices.values());
     }
 
     on_g_signal(senderName_, signalName, parameters) {
-        // Ignore signals until the ObjectManager has started
-        if (!this.active)
-            return;
-
         const args = parameters.deepUnpack();
 
-        if (signalName === 'InterfacesAdded') {
-            this._onInterfacesAdded(...args).catch(e => {
-                if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
-                    logError(e, signalName);
-            });
-        } else if (signalName === 'InterfacesRemoved') {
+        if (signalName === 'InterfacesAdded')
+            this._onInterfacesAdded(...args);
+        else if (signalName === 'InterfacesRemoved')
             this._onInterfacesRemoved(...args);
-        }
     }
 
-    /**
-     * org.freedesktop.DBus.ObjectManager.InterfacesAdded
-     *
-     * @param {string} objectPath - Path interfaces have been added to
-     * @param {object} interfaces - A dictionary of interface objects
-     */
-    async _onInterfacesAdded(objectPath, interfaces) {
-        // An empty list means only the object has been added
-        if (Object.values(interfaces).length === 0)
-            return;
-
-        if (this._devices[objectPath])
-            return;
-
-        const device = new Device({
-            g_connection: this.g_connection,
-            g_flags: Gio.DBusProxyFlags.DO_NOT_AUTO_START,
-            g_name: this.g_name,
-            g_object_path: objectPath,
-        });
-        await _proxyInit(device, this._cancellable);
-
-        this._devices[objectPath] = device;
-        this.emit('device-added', device);
-    }
-
-    /**
-     * org.freedesktop.DBus.ObjectManager.InterfacesRemoved
-     *
-     * @param {string} objectPath - Path interfaces have been removed from
-     * @param {string[]} interfaces - List of interface names removed
-     */
-    _onInterfacesRemoved(objectPath, interfaces) {
-        // An empty interface list means the object is being removed
-        if (interfaces.length === 0)
-            return;
-
-        // Ensure this is a managed device
-        const device = this._devices[objectPath];
-
-        if (device === undefined)
-            return;
-
-        delete this._devices[objectPath];
-        this.emit('device-removed', device);
-    }
-
-    async _onNameOwnerChanged() {
+    _initCallback(service, result) {
         try {
-            if (this.g_name_owner === null) {
-                this._unloadDevices();
+            service.init_finish(result);
 
-                this._active = false;
-                this.notify('active');
-            } else {
-                this._active = true;
-                this.notify('active');
-
-                await this._loadDevices();
-            }
+            this._nameOwnerChangedId = this.connect('notify::g-name-owner',
+                this._onNameOwnerChanged.bind(this));
+            this._onNameOwnerChanged();
         } catch (e) {
             if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
                 logError(e);
         }
     }
 
-    async _loadDevices() {
-        const managedObjects = await new Promise((resolve, reject) => {
-            this.call(
-                'GetManagedObjects',
-                null,
-                Gio.DBusCallFlags.DO_NOT_AUTO_START,
-                -1,
-                this._cancellable,
-                (proxy, res) => {
-                    try {
-                        const variant = proxy.call_finish(res);
-                        resolve(variant.deepUnpack()[0]);
-                    } catch (e) {
-                        Gio.DBusError.strip_remote_error(e);
-                        reject(e);
-                    }
-                }
-            );
+    _deviceInitCallback(device, result) {
+        try {
+            device.init_finish(result);
+
+            if (this._devices.has(device.g_object_path))
+                return;
+
+            this._devices.set(device.g_object_path, device);
+            this.emit('device-added', device);
+        } catch (e) {
+            if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
+                logError(e, device.g_object_path);
+        }
+    }
+
+    _onInterfacesAdded(objectPath, interfaces) {
+        // An empty list means only the object has been added
+        if (Object.values(interfaces).length === 0)
+            return;
+
+        const device = new Device({
+            g_connection: this.g_connection,
+            g_name: this.g_name,
+            g_object_path: objectPath,
         });
 
-        return Promise.all(Object.entries(managedObjects).map(entry => {
-            return this._onInterfacesAdded(...entry);
-        }));
+        device.init_async(GLib.PRIORITY_DEFAULT, this._cancellable,
+            this._deviceInitCallback.bind(this));
+    }
+
+    _onInterfacesRemoved(objectPath, interfaces) {
+        // An empty interface list means the object is being removed
+        if (interfaces.length === 0)
+            return;
+
+        const device = this._devices.get(objectPath);
+
+        if (device === undefined)
+            return;
+
+        this._devices.delete(objectPath);
+        this.emit('device-removed', device);
+    }
+
+    _onNameOwnerChanged() {
+        if (this.g_name_owner === null) {
+            this._unloadDevices();
+
+            this._active = false;
+            this.notify('active');
+        } else {
+            this._active = true;
+            this.notify('active');
+
+            this._loadDevices();
+        }
+    }
+
+    _loadDevices() {
+        this.call(
+            'GetManagedObjects',
+            null,
+            Gio.DBusCallFlags.DO_NOT_AUTO_START,
+            -1,
+            this._cancellable,
+            (proxy, res) => {
+                try {
+                    const variant = proxy.call_finish(res);
+                    const [managedObjects] = variant.deepUnpack();
+
+                    Object.entries(managedObjects).forEach(entry => {
+                        this._onInterfacesAdded(...entry);
+                    });
+                } catch (e) {
+                    if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
+                        logError(e);
+                }
+            }
+        );
     }
 
     _unloadDevices() {
-        for (const [objectPath, device] of Object.entries(this._devices)) {
-            delete this._devices[objectPath];
+        for (const [objectPath, device] of this._devices) {
+            this._devices.delete(objectPath);
             this.emit('device-removed', device);
         }
     }
 
     /**
      * Activate the service.
+     *
+     * This avoids `org.freedesktop.Application.Activate()`, which would result
+     * in a `GApplication::activate` emission opening the main window.
      */
-    async activate() {
-        try {
-            if (this._activating === false && this.active === false) {
-                this._activating = true;
+    activate() {
+        if (this._activating || this.active)
+            return;
 
-                await _proxyInit(this, this._cancellable);
-                await this._onNameOwnerChanged();
-
-                // Start the service without emitting GApplication::activate
-                if (!this.active) {
-                    const reply = await new Promise((resolve, reject) => {
-                        this.g_connection.call(
-                            'org.freedesktop.DBus',
-                            '/org/freedesktop/DBus',
-                            'org.freedesktop.DBus',
-                            'StartServiceByName',
-                            new GLib.Variant('(su)', [APPLICATION_ID, 0]),
-                            new GLib.VariantType('(u)'),
-                            Gio.DBusCallFlags.NONE,
-                            -1,
-                            this._cancellable,
-                            (proxy, res) => {
-                                try {
-                                    resolve(proxy.call_finish(res));
-                                } catch (e) {
-                                    Gio.DBusError.strip_remote_error(e);
-                                    reject(e);
-                                }
-                            }
-                        );
-                    });
-
-                    // The two expected results are DBUS_START_REPLY_SUCCESS and
-                    // DBUS_START_REPLY_ALREADY_RUNNING
+        this._activating = true;
+        Gio.DBus.session.call(
+            'org.freedesktop.DBus',
+            '/org/freedesktop/DBus',
+            'org.freedesktop.DBus',
+            'StartServiceByName',
+            new GLib.Variant('(su)', [APPLICATION_ID, 0]),
+            new GLib.VariantType('(u)'),
+            Gio.DBusCallFlags.NONE,
+            -1,
+            this._cancellable,
+            (proxy, res) => {
+                try {
+                    const reply = proxy.call_finish(res);
                     const [result] = reply.deepUnpack();
 
+                    // The two expected results are DBUS_START_REPLY_SUCCESS
+                    // and DBUS_START_REPLY_ALREADY_RUNNING, respectively
                     if (result !== 1 && result !== 2) {
                         throw new Gio.IOErrorEnum({
                             code: Gio.DBusError.FAILED,
                             message: `Unexpected reply: ${result}`,
                         });
                     }
+
+                    this._activating = false;
+                } catch (e) {
+                    if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
+                        logError(e);
                 }
-
-                this._activating = false;
             }
-        } catch (e) {
-            this._activating = false;
-
-            if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
-                logError(e);
-        }
+        );
     }
 
     /**
@@ -419,8 +369,6 @@ var Service = GObject.registerClass({
                 try {
                     connection.call_finish(res);
                 } catch (e) {
-                    Gio.DBusError.strip_remote_error(e);
-
                     if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
                         logError(e);
                 }
@@ -448,37 +396,11 @@ var Service = GObject.registerClass({
                 try {
                     connection.call_finish(res);
                 } catch (e) {
-                    Gio.DBusError.strip_remote_error(e);
-
                     if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
                         logError(e);
                 }
             }
         );
-    }
-
-    /**
-     * Sync with the state of the D-Bus service.
-     *
-     * This should typically be called after construction, once signal handlers
-     * have been connected.
-     */
-    async sync() {
-        try {
-            if (this._activating === false) {
-                this._activating = true;
-
-                await _proxyInit(this, this._cancellable);
-                await this._onNameOwnerChanged();
-
-                this._activating = false;
-            }
-        } catch (e) {
-            this._activating = false;
-
-            if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
-                logError(e);
-        }
     }
 
     /**
