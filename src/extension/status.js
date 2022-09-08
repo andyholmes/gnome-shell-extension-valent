@@ -378,9 +378,6 @@ var Indicator = GObject.registerClass({
         QuickSettingsMenu._addItems(this.quickSettingsItems);
         QuickSettingsMenu._indicators.insert_child_at_index(this, 0);
         this.connect('destroy', this._onDestroy.bind(this));
-
-        // Prime the service
-        this._service.sync();
     }
 
     _onDestroy(_actor) {
