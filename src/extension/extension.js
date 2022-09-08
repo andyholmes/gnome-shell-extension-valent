@@ -120,9 +120,6 @@ const ServiceIndicator = GObject.registerClass({
         // TRANSLATORS: A menu option to open the main window
         this._item.menu.addSettingsAction(_('All Devices'),
             'ca.andyholmes.Valent.desktop');
-
-        // Prime the service
-        this.service.sync();
     }
 
     _onDestroy(actor) {
