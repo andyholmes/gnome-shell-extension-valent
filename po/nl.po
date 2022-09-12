@@ -1,0 +1,51 @@
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the gnome-shell-extension-valent package.
+#
+# Heimen Stoffels <vistausss@fastmail.com>, 2022.
+msgid ""
+msgstr ""
+"Project-Id-Version: gnome-shell-extension-valent\n"
+"Report-Msgid-Bugs-To: https://github.com/andyholmes/gnome-shell-extension-vale"
+"nt/issues\n"
+"POT-Creation-Date: 2022-09-06 22:47-0700\n"
+"PO-Revision-Date: 2022-09-12 20:01+0200\n"
+"Last-Translator: Heimen Stoffels <vistausss@fastmail.com>\n"
+"Language-Team: Dutch\n"
+"Language: nl\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Lokalize 22.08.1\n"
+
+#. TRANSLATORS: A notification button to show the quick-reply entry
+#: src/extension/notification.js:59
+msgid "Reply"
+msgstr "Beantwoorden"
+
+#. TRANSLATORS: A reply entry in a notification
+#: src/extension/notification.js:69
+msgid "Type a message"
+msgstr "Voer een bericht in…"
+
+#. TRANSLATORS: The quick settings item label
+#: src/extension/status.js:247 src/extension/status.js:338
+msgid "Valent"
+msgstr "Valent"
+
+#: src/extension/status.js:258
+msgid "Device Connections"
+msgstr "Verbonden apparaten"
+
+#. TRANSLATORS: A menu option to open the main window
+#: src/extension/status.js:267
+msgid "All Devices"
+msgstr "Alle apparaten"
+
+#. TRANSLATORS: %d is the number of devices connected
+#: src/extension/status.js:334
+#, javascript-format
+msgid "%d Connected"
+msgid_plural "%d Connected"
+msgstr[0] "%d verbonden apparaat"
+msgstr[1] "%d verbonden apparaten"
