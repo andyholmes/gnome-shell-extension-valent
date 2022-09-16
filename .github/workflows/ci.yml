@@ -2,8 +2,6 @@ name: CI
 
 on:
   pull_request:
-    branches: [gnome-42]
-  workflow_dispatch:
 
 jobs:
   pre-test:
@@ -106,7 +104,7 @@ jobs:
     needs: [pre-test]
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/${{ github.repository }}:latest
+      image: ghcr.io/${{ github.repository }}:${{ github.base_ref }}
 
     steps:
       - name: Checkout
