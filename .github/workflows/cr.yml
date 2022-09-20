@@ -1,38 +1,57 @@
-name: Update CI
+name: CR
 
 on:
   push:
     branches: [main]
-    paths: [tests/extra/Dockerfile]
+    paths:
+      - 'build-aux/docker/Dockerfile'
+      - 'build-aux/docker/Dockerfile.toolbox'
   pull_request:
-    branches: [main]
-    paths: [tests/extra/Dockerfile]
+    paths:
+      - 'build-aux/docker/Dockerfile'
+      - 'build-aux/docker/Dockerfile.toolbox'
   schedule:
     # Once a week to keep dependencies up to date
     - cron: 0 0 * * 0
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 env:
   REGISTRY: ghcr.io
   USERNAME: ${{ github.actor }}
   PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   build:
+    name: Docker
     runs-on: ubuntu-latest
     permissions:
-      contents: read
       packages: write
+
+    strategy:
+      matrix:
+        label:
+          - CI
+          - Toolbox
+        include:
+          - label: CI
+            file: ./build-aux/docker/Dockerfile
+            image: ghcr.io/${{ github.repository }}
+          - label: Toolbox
+            file: ./build-aux/docker/Dockerfile.toolbox
+            image: ghcr.io/${{ github.repository }}-toolbox
+      fail-fast: false
 
     steps:
       - name: Metadata
         id: metadata
         uses: docker/metadata-action@v4
         with:
-          images: ghcr.io/${{ github.repository }}
+          images: ${{ matrix.image }}
           tags: |
-            # set latest tag for master branch
+            # set latest tag for main branch
             type=raw,value=latest,enable={{is_default_branch}}
             type=ref,event=branch
 
@@ -47,7 +66,7 @@ jobs:
       - name: Build
         uses: docker/build-push-action@v3
         with:
-          file: ./tests/extra/Dockerfile
+          file: ${{ matrix.file }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
