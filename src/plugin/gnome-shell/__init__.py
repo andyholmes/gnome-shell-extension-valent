@@ -57,7 +57,7 @@ class ValentGsClipboardAdapter(Valent.ClipboardAdapter):
             metadata = parameters[0]
             self.mimetypes = metadata.get('mimetypes', [])
             self.timestamp = metadata.get('timestamp', Valent.timestamp_ms())
-            self.emit_changed()
+            self.changed()
 
     def do_get_mimetypes(self):
         """
@@ -239,7 +239,7 @@ class ValentGsSessionAdapter(Valent.SessionAdapter):
     def _get_active_cb(self, proxy, result, user_data):
         try:
             self.locked = proxy.call_finish(result)[0]
-            self.emit_changed()
+            self.changed()
         except GLib.Error as error:
             print(repr(error))
 
@@ -265,7 +265,7 @@ class ValentGsSessionAdapter(Valent.SessionAdapter):
             return
 
         self.locked = parameters[0]
-        self.emit_changed()
+        self.changed()
 
     def do_get_active(self):
         """
