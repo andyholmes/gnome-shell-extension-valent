@@ -239,7 +239,8 @@ class ValentGsSessionAdapter(Valent.SessionAdapter):
     def _get_active_cb(self, proxy, result, user_data):
         try:
             self.locked = proxy.call_finish(result)[0]
-            self.changed()
+            self.notify('active')
+            self.notify('locked')
         except GLib.Error as error:
             print(repr(error))
 
@@ -265,7 +266,8 @@ class ValentGsSessionAdapter(Valent.SessionAdapter):
             return
 
         self.locked = parameters[0]
-        self.changed()
+        self.notify('active')
+        self.notify('locked')
 
     def do_get_active(self):
         """
