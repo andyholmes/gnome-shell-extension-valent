@@ -6,6 +6,7 @@ extension_sources = [
   'extension.js',
   'notification.js',
   'remote.js',
+  'session.js',
   'status.js',
   'stylesheet.css',
 ]
