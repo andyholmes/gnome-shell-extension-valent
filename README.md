@@ -50,13 +50,13 @@ flatpak override --user \
 
 This project is in an early stage of development, with no stable releases. For
 those interested in trying out GNOME Shell integration for Valent, there are
-nightly builds available in [Zip format][extension-zip].
+nightly builds available as an [extension ZIP][extension-zip].
 
 Join the community in [Discussions] to ask questions, share ideas and get
 involved in Valent!
 
 [discussions]: https://github.com/andyholmes/gnome-shell-extension-valent/discussions
-[extension-zip]: https://nightly.link/andyholmes/gnome-shell-extension-valent/workflows/cd/main/nightly-build.zip
+[extension-zip]: https://nightly.link/andyholmes/gnome-shell-extension-valent/workflows/cd/main/valent@andyholmes.ca.zip
 [flatseal]: https://flathub.org/apps/details/com.github.tchx84.Flatseal
 [gnome]: https://www.gnome.org
 [kdeconnect]: https://kdeconnect.kde.org
