@@ -10,6 +10,7 @@ const Extension = ExtensionUtils.getCurrentExtension();
 
 const Clipboard = Extension.imports.clipboard;
 const Notification = Extension.imports.notification;
+const Session = Extension.imports.session;
 const Status = Extension.imports.status;
 
 
@@ -76,6 +77,7 @@ function init() {
 /** */
 function enable() {
     Notification.patchNotificationSources();
+    Session.enable();
 
     if (serviceIndicator === null)
         serviceIndicator = new Status.Indicator();
@@ -88,6 +90,7 @@ function enable() {
 /** */
 function disable() {
     Notification.unpatchNotificationSources();
+    Session.disable();
 
     serviceIndicator?.destroy();
     serviceIndicator = null;
