@@ -23,6 +23,7 @@ jobs:
 
       - name: Build
         env:
+          DESTDIR: ${{ github.workspace }}
           WORKSPACE: ${{ github.workspace }}
         run: |
           ./build-aux/misc/ego.sh
@@ -30,5 +31,5 @@ jobs:
       - name: Upload
         uses: actions/upload-artifact@v3
         with:
-          name: nightly-build
-          path: valent@andyholmes.ca.zip
+          name: valent@andyholmes.ca
+          path: ${{ github.workspace }}/valent@andyholmes.ca/*
