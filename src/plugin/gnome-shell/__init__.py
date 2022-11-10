@@ -4,8 +4,8 @@
 # pylint: disable=fixme,invalid-name
 
 """
-This module provides implementations for :class:`~Valent.ClipboardAdapter` and
-:class:`~Valent.SessionAdapter`, when used with the GNOME Shell extension.
+This module provides implementations for :class:`~Valent.ClipboardAdapter`, when
+used with the GNOME Shell extension.
 """
 
 # pylint: disable-next=no-name-in-module
@@ -15,8 +15,6 @@ from gi.repository import Gio, GLib, GObject, Valent
 GNOMESHELL_NAME = 'org.gnome.Shell'
 CLIPBOARD_NAME = 'org.gnome.Shell.Extensions.Valent.Clipboard'
 CLIPBOARD_PATH = '/org/gnome/Shell/Extensions/Valent/Clipboard'
-SCREENSAVER_NAME = 'org.gnome.ScreenSaver'
-SCREENSAVER_PATH = '/org/gnome/ScreenSaver'
 
 
 class ValentGsClipboardAdapter(Valent.ClipboardAdapter):
