@@ -83,7 +83,7 @@ jobs:
       - name: Spell Check
         uses: codespell-project/actions-codespell@master
         with:
-          skip: ./tests,./*.po
+          skip: .git,./tests,./*.po
 
   commitlint:
     name: Commitlint

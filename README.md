@@ -55,7 +55,7 @@ nightly builds available as an [extension ZIP][extension-zip].
 Join the community in [Discussions] to ask questions, share ideas and get
 involved in Valent!
 
-[discussions]: https://github.com/andyholmes/gnome-shell-extension-valent/discussions
+[discussions]: https://github.com/andyholmes/valent/discussions
 [extension-zip]: https://nightly.link/andyholmes/gnome-shell-extension-valent/workflows/cd/main/valent@andyholmes.ca.zip
 [flatseal]: https://flathub.org/apps/details/com.github.tchx84.Flatseal
 [gnome]: https://www.gnome.org
