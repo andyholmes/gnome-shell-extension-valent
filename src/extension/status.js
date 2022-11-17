@@ -292,6 +292,9 @@ const MenuToggle = GObject.registerClass({
     }
 
     _onDeviceActivated(item) {
+        Main.overview.hide();
+        Main.panel.closeQuickSettings();
+
         const target = item.device.get_cached_property('Id');
         this.service.activate_action('window', target);
     }
