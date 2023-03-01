@@ -245,7 +245,6 @@ const MenuToggle = GObject.registerClass({
     constructor(params = {}) {
         super({
             label: _('Valent'),
-            toggle_mode: true,
             ...params,
         });
 
