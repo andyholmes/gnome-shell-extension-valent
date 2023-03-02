@@ -330,14 +330,14 @@ const MenuToggle = GObject.registerClass({
         });
 
         if (available.length === 1) {
-            this.label = available[0].name;
+            this.title = available[0].name;
         } else if (available.length > 0) {
             // TRANSLATORS: %d is the number of devices connected
-            this.label = ngettext('%d Connected', '%d Connected',
+            this.title = ngettext('%d Connected', '%d Connected',
                 available.length).format(available.length);
         } else {
             // TRANSLATORS: The quick settings item label
-            this.label = _('Valent');
+            this.title = _('Valent');
         }
 
         this.checked = this.service.active;
