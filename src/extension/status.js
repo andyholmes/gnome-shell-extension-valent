@@ -243,10 +243,7 @@ const MenuToggle = GObject.registerClass({
     },
 }, class MenuToggle extends QuickSettings.QuickMenuToggle {
     constructor(params = {}) {
-        super({
-            label: _('Valent'),
-            ...params,
-        });
+        super(params);
 
         this._activeIcon = Gio.Icon.new_for_string(
             `file://${Extension.path}/data/phonelink-symbolic.svg`);
