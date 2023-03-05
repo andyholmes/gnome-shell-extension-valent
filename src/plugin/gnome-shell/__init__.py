@@ -79,7 +79,7 @@ class ValentGsClipboardAdapter(Valent.ClipboardAdapter):
         except GLib.Error as error:
             task.return_error(error)
 
-    def do_read_bytes(self, cancellable, callback, _user_data):
+    def do_read_bytes(self, mimetype, cancellable, callback, _user_data):
         """
         Implementation of :meth:`~Valent.ClipboardAdapter.read_bytes`.
         """
@@ -96,6 +96,7 @@ class ValentGsClipboardAdapter(Valent.ClipboardAdapter):
             return
 
         self.proxy.call('GetBytes',
+                        GLib.Variant('(s)', (mimetype,)),
                         None,
                         Gio.DBusCallFlags.NO_AUTO_START,
                         -1,
