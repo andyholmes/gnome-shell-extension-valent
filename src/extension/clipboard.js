@@ -27,12 +27,6 @@ const DBUS_INFO = Gio.DBusInterfaceInfo.new_for_xml(`
     <method name="GetMimetypes">
       <arg direction="out" type="as" name="mimetypes"/>
     </method>
-    <method name="GetText">
-      <arg direction="out" type="s" name="text"/>
-    </method>
-    <method name="SetText">
-      <arg direction="in" type="s" name="text"/>
-    </method>
 
     <!-- Signals -->
     <signal name="Changed">
@@ -281,74 +275,6 @@ var Clipboard = GObject.registerClass({
                     Meta.SelectionType.SELECTION_CLIPBOARD);
 
                 resolve(mimetypes);
-            } catch (e) {
-                reject(e);
-            }
-        });
-    }
-
-    /**
-     * Get the text content of the clipboard.
-     *
-     * @returns {Promise<string>} - Text content of the clipboard
-     */
-    GetText() {
-        return new Promise((resolve, reject) => {
-            const mimetypes = this._selection.get_mimetypes(
-                Meta.SelectionType.SELECTION_CLIPBOARD);
-
-            const mimetype = TEXT_MIMETYPES.find(type => mimetypes.includes(type));
-
-            if (mimetype !== undefined) {
-                const stream = Gio.MemoryOutputStream.new_resizable();
-
-                this._selection.transfer_async(
-                    Meta.SelectionType.SELECTION_CLIPBOARD,
-                    mimetype, -1,
-                    stream,
-                    this._cancellable,
-                    (selection, res) => {
-                        try {
-                            selection.transfer_finish(res);
-
-                            const bytes = stream.steal_as_bytes();
-                            const bytearray = bytes.get_data();
-
-                            resolve(this._decoder.decode(bytearray));
-                        } catch (e) {
-                            reject(e);
-                        }
-                    }
-                );
-            } else {
-                reject(new Error('text not available'));
-            }
-        });
-    }
-
-    /**
-     * Set the text content of the clipboard.
-     *
-     * @param {string} text - text content to set
-     * @returns {Promise} - A promise for the operation
-     */
-    SetText(text) {
-        return new Promise((resolve, reject) => {
-            try {
-                if (typeof text !== 'string') {
-                    throw new Gio.DBusError({
-                        code: Gio.DBusError.INVALID_ARGS,
-                        message: 'expected string',
-                    });
-                }
-
-                const source = Meta.SelectionSourceMemory.new(
-                    'text/plain;charset=utf-8', GLib.Bytes.new(text));
-
-                this._selection.set_owner(
-                    Meta.SelectionType.SELECTION_CLIPBOARD, source);
-
-                resolve();
             } catch (e) {
                 reject(e);
             }
