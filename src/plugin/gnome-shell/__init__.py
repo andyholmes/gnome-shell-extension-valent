@@ -74,7 +74,7 @@ class ValentGsClipboardAdapter(Valent.ClipboardAdapter):
     def _get_bytes_cb(self, proxy, result, task):
         try:
             data = proxy.call_finish(result)[0]
-            value = GObject.Value(GObject.TYPE_BYTES, GLib.Bytes(data))
+            value = GObject.Value(GLib.Bytes, GLib.Bytes(data))
             task.return_value(value)
         except GLib.Error as error:
             task.return_error(error)
