@@ -97,7 +97,6 @@ class ValentGsClipboardAdapter(Valent.ClipboardAdapter):
 
         self.proxy.call('GetBytes',
                         GLib.Variant('(s)', (mimetype,)),
-                        None,
                         Gio.DBusCallFlags.NO_AUTO_START,
                         -1,
                         cancellable,
