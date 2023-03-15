@@ -65,13 +65,6 @@ var Device = GObject.registerClass({
             DeviceState.NONE, DeviceState.CONNECTED | DeviceState.PAIRED_OUTGOING,
             DeviceState.NONE
         ),
-        'type': GObject.ParamSpec.string(
-            'type',
-            'Type',
-            'A string hint, indicating the form-factor of the device',
-            GObject.ParamFlags.READABLE,
-            null
-        ),
     },
 }, class Device extends Gio.DBusProxy {
     constructor(params = {}) {
@@ -93,7 +86,6 @@ var Device = GObject.registerClass({
                 'Id': 'id',
                 'Name': 'name',
                 'State': 'state',
-                'Type': 'type',
             };
 
             for (const name in changed.deepUnpack())
@@ -126,10 +118,6 @@ var Device = GObject.registerClass({
 
     get state() {
         return this._get('State', DeviceState.NONE);
-    }
-
-    get type() {
-        return this._get('Type', 'desktop');
     }
 });
 
