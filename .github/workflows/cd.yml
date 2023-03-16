@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - gnome-42
+      - gnome-43
   workflow_dispatch:
 
 permissions:
