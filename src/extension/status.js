@@ -3,7 +3,7 @@
 
 /* exported Indicator */
 
-const { Clutter, Gio, GObject, St } = imports.gi;
+const { Clutter, Gio, GLib, GObject, Pango, Shell, St } = imports.gi;
 
 const Main = imports.ui.main;
 const PopupMenu = imports.ui.popupMenu;
@@ -249,6 +249,8 @@ const MenuToggle = GObject.registerClass({
             `file://${Extension.path}/data/phonelink-symbolic.svg`);
         this._inactiveIcon = Gio.Icon.new_for_string(
             `file://${Extension.path}/data/phonelink-off-symbolic.svg`);
+        this._infoIcon = Gio.Icon.new_for_string(
+            `file://${Extension.path}/data/valent-info-symbolic.svg`);
 
         this._activeChangedId = this.service.connect('notify::active',
             this._sync.bind(this));
@@ -264,17 +266,38 @@ const MenuToggle = GObject.registerClass({
         this._deviceSection = new PopupMenu.PopupMenuSection();
         this.menu.addMenuItem(this._deviceSection);
 
-        // Settings
+        // Placeholder
+        this._placeholderItem = new PopupMenu.PopupMenuItem('', {
+            style_class: 'bt-menu-placeholder',
+            reactive: false,
+            can_focus: false,
+        });
+        this._placeholderItem.label.clutter_text.set({
+            ellipsize: Pango.EllipsizeMode.NONE,
+            line_wrap: true,
+        });
+        this.menu.addMenuItem(this._placeholderItem);
+
+        this._placeholderItem.bind_property('visible',
+            this._deviceSection.actor, 'visible',
+            GObject.BindingFlags.SYNC_CREATE |
+            GObject.BindingFlags.INVERT_BOOLEAN);
+
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-        this._serviceItem = this.menu.addSettingsAction(_('All Devices'),
-            'ca.andyholmes.Valent.desktop');
+        this._serviceItem = this.menu.addAction(_('All Devices'),
+            this._onServiceActivated.bind(this), '' /* reserve icon */);
 
         this.connect('destroy', this._onDestroy.bind(this));
         this._sync();
     }
 
     vfunc_clicked(_clickedButton) {
-        if (this.service.active)
+        const app = Shell.AppSystem.get_default().lookup_app(
+            'ca.andyholmes.Valent.desktop');
+
+        if (app === null)
+            this.menu.open();
+        else if (this.service.active)
             this.service.activate_action('quit');
         else
             this.service.activate();
@@ -311,6 +334,24 @@ const MenuToggle = GObject.registerClass({
         this._sync();
     }
 
+    _onServiceActivated() {
+        const app = Shell.AppSystem.get_default().lookup_app(
+            'ca.andyholmes.Valent.desktop');
+
+        if (app === null) {
+            Gio.app_info_launch_default_for_uri(Extension.metadata.url,
+                global.create_app_launch_context(0, -1));
+        } else if (this.service.active) {
+            const target = GLib.Variant.new_string('main');
+            this.service.activate_action('window', target);
+        } else {
+            this.service.activate();
+        }
+
+        Main.overview.hide();
+        Main.panel.closeQuickSettings();
+    }
+
     _sync() {
         const connectedDevices = this.service.devices.filter(device => {
             return (device.state & Remote.DeviceState.CONNECTED) !== 0 &&
@@ -330,6 +371,33 @@ const MenuToggle = GObject.registerClass({
         this.gicon = this.service.active
             ? this._activeIcon
             : this._inactiveIcon;
+
+        // Placeholder
+        let placeholderLabel = '';
+        let serviceIcon = null;
+        let serviceLabel = '';
+        const app = Shell.AppSystem.get_default().lookup_app(
+            'ca.andyholmes.Valent.desktop');
+
+        if (app === null) {
+            placeholderLabel = _('Valent must be installed to connect and sync devices');
+            serviceLabel = _('Help');
+            serviceIcon = this._infoIcon;
+            this._serviceItem.add_style_class_name('valent-help-item');
+        } else if (this.service.active) {
+            placeholderLabel = _('No available or connected devices');
+            serviceLabel = _('All Devices');
+            this._serviceItem.remove_style_class_name('valent-help-item');
+        } else {
+            placeholderLabel = _('Turn on to connect to devices');
+            serviceLabel = _('All Devices');
+            this._serviceItem.remove_style_class_name('valent-help-item');
+        }
+
+        this._placeholderItem.label.text = placeholderLabel;
+        this._placeholderItem.visible = !nConnected;
+        this._serviceItem.label.text = serviceLabel;
+        this._serviceItem.setIcon(serviceIcon);
     }
 });
 
@@ -403,12 +471,12 @@ var Indicator = GObject.registerClass({
     }
 
     _sync() {
-        const available = this._service.devices.filter(device => {
+        const connectedDevices = this._service.devices.filter(device => {
             return (device.state & Remote.DeviceState.CONNECTED) !== 0 &&
                    (device.state & Remote.DeviceState.PAIRED) !== 0;
         });
 
-        this._icon.visible = available.length > 0;
+        this._icon.visible = connectedDevices.length > 0;
     }
 });
 

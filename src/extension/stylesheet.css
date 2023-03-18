@@ -15,3 +15,21 @@
   icon-size: 16px;
 }
 
+/* Help Item */
+.valent-help-item {
+    background-color: #3584e4;
+    color: #ffffff;
+    font-weight: bold;
+    padding-left: 0.75em;
+    transition-duration: 100ms;
+}
+
+.valent-help-item:hover {
+    background-color: #4b92e7;
+}
+
+.valent-help-item:active {
+    background-color: #1d72d8;
+    color: #ededed;
+}
+
