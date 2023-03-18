@@ -27,7 +27,7 @@ install_data(extension_sources,
   install_dir: join_paths(extensionsdir, extuuid),
 )
 
-install_subdir('data',
+install_subdir('icons',
   install_dir: join_paths(extensionsdir, extuuid),
 )
 
