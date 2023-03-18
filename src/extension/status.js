@@ -335,7 +335,7 @@ const MenuToggle = GObject.registerClass({
             return;
 
         appSystem.disconnect(this._installedId);
-        this._installedId = 0;
+        this._installedId = null;
         this._sync();
     }
 
@@ -362,8 +362,8 @@ const MenuToggle = GObject.registerClass({
             'ca.andyholmes.Valent.desktop');
 
         if (app === null && !this._installedId) {
-            this._installedId = Shell.AppSystem.get_default().connect('installed-changed',
-                this._onInstalledChanged.bind(this));
+            this._installedId = Shell.AppSystem.get_default().connect(
+                'installed-changed', this._onInstalledChanged.bind(this));
         }
 
         // Menu Toggle
