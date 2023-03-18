@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: gnome-shell-extension-valent\n"
 "Report-Msgid-Bugs-To: https://github.com/andyholmes/gnome-shell-extension-"
 "valent/issues\n"
-"POT-Creation-Date: 2023-03-16 21:34-0700\n"
+"POT-Creation-Date: 2023-03-17 20:55-0700\n"
 "PO-Revision-Date: 2022-09-12 20:01+0200\n"
 "Last-Translator: Heimen Stoffels <vistausss@fastmail.com>\n"
 "Language-Team: Dutch\n"
@@ -28,20 +28,35 @@ msgstr "Beantwoorden"
 msgid "Type a message"
 msgstr "Voer een bericht in…"
 
-#: src/extension/status.js:261 src/extension/status.js:383
+#: src/extension/status.js:262 src/extension/status.js:431
 msgid "Devices"
 msgstr ""
 
-#. TRANSLATORS: A menu option to open the main window
-#: src/extension/status.js:271
+#: src/extension/status.js:287 src/extension/status.js:389
+#: src/extension/status.js:393
 msgid "All Devices"
 msgstr "Alle apparaten"
 
 #. TRANSLATORS: This is the number of connected devices
-#: src/extension/status.js:348
+#: src/extension/status.js:364
 #, javascript-format
 msgid "%d Connected"
 msgid_plural "%d Connected"
 msgstr[0] "%d verbonden apparaat"
 msgstr[1] "%d verbonden apparaten"
 
+#: src/extension/status.js:383
+msgid "Valent must be installed to connect and sync devices"
+msgstr ""
+
+#: src/extension/status.js:384
+msgid "Help"
+msgstr ""
+
+#: src/extension/status.js:388
+msgid "No available or connected devices"
+msgstr ""
+
+#: src/extension/status.js:392
+msgid "Turn on to connect to devices"
+msgstr ""
