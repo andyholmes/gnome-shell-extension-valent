@@ -252,9 +252,10 @@ const MenuToggle = GObject.registerClass({
 
         this.menu.setHeader(this._activeIcon, _('Device Connections'));
 
-        this._devices = new WeakMap();
-        this._devicesSection = new PopupMenu.PopupMenuSection();
-        this.menu.addMenuItem(this._devicesSection);
+        // Devices
+        this._deviceItems = new Map();
+        this._deviceSection = new PopupMenu.PopupMenuSection();
+        this.menu.addMenuItem(this._deviceSection);
 
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
@@ -297,28 +298,17 @@ const MenuToggle = GObject.registerClass({
     _onDeviceAdded(_service, device) {
         const menuItem = new DeviceMenuItem(device);
         menuItem.connect('activate', this._onDeviceActivated.bind(this));
-        this._devicesSection.addMenuItem(menuItem);
+        menuItem.connect('notify::visible', this._sync.bind(this));
+        this._deviceSection.addMenuItem(menuItem);
+        this._deviceItems.set(device, menuItem);
 
-        this._serviceItem.bind_property('visible', menuItem, 'reactive',
-            GObject.BindingFlags.SYNC_CREATE);
-
-        const stateChangedId = device.connect('notify::state',
-            this._sync.bind(this));
-
-        this._devices.set(device, [menuItem, stateChangedId]);
         this._sync();
     }
 
     _onDeviceRemoved(_service, device) {
-        const [menuItem, stateChangedId] = this._devices.get(device) ?? [];
+        this._deviceItems.get(device)?.destroy();
+        this._deviceItems.delete(device);
 
-        if (menuItem)
-            menuItem.destroy();
-
-        if (stateChangedId)
-            device.disconnect(stateChangedId);
-
-        this._devices.delete(device);
         this._sync();
     }
 
