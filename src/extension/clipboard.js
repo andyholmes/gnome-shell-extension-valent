@@ -37,17 +37,6 @@ const DBUS_INFO = Gio.DBusInterfaceInfo.new_for_xml(`
 `);
 
 
-/*
- * Text Mimetypes
- */
-const TEXT_MIMETYPES = [
-    'text/plain;charset=utf-8',
-    'UTF8_STRING',
-    'text/plain',
-    'STRING',
-];
-
-
 /**
  * ValentClipboard:
  *
