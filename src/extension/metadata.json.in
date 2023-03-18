@@ -6,5 +6,5 @@
     "version": @EXTENSION_VERSION@,
     "session-modes": ["unlock-dialog", "user"],
     "shell-version": ["44"],
-    "url": "https://github.com/andyholmes/gnome-shell-extension-valent"
+    "url": "https://valent.andyholmes.ca"
 }
