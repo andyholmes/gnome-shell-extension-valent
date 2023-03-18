@@ -257,7 +257,7 @@ const MenuToggle = GObject.registerClass({
         this._deviceRemovedId = this.service.connect('device-removed',
             this._onDeviceRemoved.bind(this));
 
-        this.menu.setHeader(this._activeIcon, _('Device Connections'));
+        this.menu.setHeader(this._activeIcon, _('Devices'));
 
         // Devices
         this._deviceItems = new Map();
@@ -312,21 +312,19 @@ const MenuToggle = GObject.registerClass({
     }
 
     _sync() {
-        const available = this.service.devices.filter(device => {
+        const connectedDevices = this.service.devices.filter(device => {
             return (device.state & Remote.DeviceState.CONNECTED) !== 0 &&
                    (device.state & Remote.DeviceState.PAIRED) !== 0;
         });
+        const nConnected = connectedDevices.length;
 
-        if (available.length === 1) {
-            this.title = available[0].name;
-        } else if (available.length > 0) {
-            // TRANSLATORS: %d is the number of devices connected
-            this.title = ngettext('%d Connected', '%d Connected',
-                available.length).format(available.length);
-        } else {
-            // TRANSLATORS: The quick settings item label
-            this.title = _('Valent');
-        }
+        if (nConnected > 1)
+            // TRANSLATORS: This is the number of connected devices
+            this.subtitle = ngettext('%d Connected', '%d Connected', nConnected).format(nConnected);
+        else if (nConnected === 1)
+            this.subtitle = connectedDevices[0].name;
+        else
+            this.subtitle = null;
 
         this.checked = this.service.active;
         this.gicon = this.service.active
@@ -360,7 +358,10 @@ var Indicator = GObject.registerClass({
         this._icon.visible = false;
 
         // Service Toggle
-        const menuToggle = new MenuToggle({ service: this._service });
+        const menuToggle = new MenuToggle({
+            service: this._service,
+            title: _('Devices'),
+        });
         this.quickSettingsItems.push(menuToggle);
 
         this._addItems(this.quickSettingsItems);
