@@ -250,8 +250,7 @@ const MenuToggle = GObject.registerClass({
         this._inactiveIcon = Gio.Icon.new_for_string(
             `file://${Extension.path}/data/phonelink-off-symbolic.svg`);
 
-        this.menu.setHeader('ca.andyholmes.Valent-symbolic',
-            _('Device Connections'));
+        this.menu.setHeader(this._activeIcon, _('Device Connections'));
 
         this._devices = new WeakMap();
         this._devicesSection = new PopupMenu.PopupMenuSection();
@@ -367,7 +366,8 @@ var Indicator = GObject.registerClass({
 
         // Indicator Icon
         this._icon = this._addIndicator();
-        this._icon.icon_name = 'ca.andyholmes.Valent-symbolic';
+        this._icon.gicon = Gio.Icon.new_for_string(
+            `file://${Extension.path}/data/phonelink-symbolic.svg`);
         this._icon.visible = false;
 
         // Service Toggle
