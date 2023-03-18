@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: gnome-shell-extension-valent\n"
 "Report-Msgid-Bugs-To: https://github.com/andyholmes/gnome-shell-extension-"
 "valent/issues\n"
-"POT-Creation-Date: 2023-03-15 20:06-0700\n"
+"POT-Creation-Date: 2023-03-16 21:34-0700\n"
 "PO-Revision-Date: 2022-09-12 20:01+0200\n"
 "Last-Translator: Heimen Stoffels <vistausss@fastmail.com>\n"
 "Language-Team: Dutch\n"
@@ -28,24 +28,20 @@ msgstr "Beantwoorden"
 msgid "Type a message"
 msgstr "Voer een bericht in…"
 
-#: src/extension/status.js:254
-msgid "Device Connections"
-msgstr "Verbonden apparaten"
+#: src/extension/status.js:261 src/extension/status.js:383
+msgid "Devices"
+msgstr ""
 
 #. TRANSLATORS: A menu option to open the main window
-#: src/extension/status.js:263
+#: src/extension/status.js:271
 msgid "All Devices"
 msgstr "Alle apparaten"
 
-#. TRANSLATORS: %d is the number of devices connected
-#: src/extension/status.js:336
+#. TRANSLATORS: This is the number of connected devices
+#: src/extension/status.js:348
 #, javascript-format
 msgid "%d Connected"
 msgid_plural "%d Connected"
 msgstr[0] "%d verbonden apparaat"
 msgstr[1] "%d verbonden apparaten"
 
-#. TRANSLATORS: The quick settings item label
-#: src/extension/status.js:340
-msgid "Valent"
-msgstr "Valent"
