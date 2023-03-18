@@ -250,19 +250,6 @@ const MenuToggle = GObject.registerClass({
         this._inactiveIcon = Gio.Icon.new_for_string(
             `file://${Extension.path}/data/phonelink-off-symbolic.svg`);
 
-        this.menu.setHeader(this._activeIcon, _('Device Connections'));
-
-        // Devices
-        this._deviceItems = new Map();
-        this._deviceSection = new PopupMenu.PopupMenuSection();
-        this.menu.addMenuItem(this._deviceSection);
-
-        this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-
-        // TRANSLATORS: A menu option to open the main window
-        this._serviceItem = this.menu.addSettingsAction(_('All Devices'),
-            'ca.andyholmes.Valent.desktop');
-
         this._activeChangedId = this.service.connect('notify::active',
             this._sync.bind(this));
         this._deviceAddedId = this.service.connect('device-added',
@@ -270,8 +257,20 @@ const MenuToggle = GObject.registerClass({
         this._deviceRemovedId = this.service.connect('device-removed',
             this._onDeviceRemoved.bind(this));
 
-        this._sync();
+        this.menu.setHeader(this._activeIcon, _('Device Connections'));
+
+        // Devices
+        this._deviceItems = new Map();
+        this._deviceSection = new PopupMenu.PopupMenuSection();
+        this.menu.addMenuItem(this._deviceSection);
+
+        // Settings
+        this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+        this._serviceItem = this.menu.addSettingsAction(_('All Devices'),
+            'ca.andyholmes.Valent.desktop');
+
         this.connect('destroy', this._onDestroy.bind(this));
+        this._sync();
     }
 
     vfunc_clicked(_clickedButton) {

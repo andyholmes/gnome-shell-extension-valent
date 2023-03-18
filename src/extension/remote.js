@@ -308,9 +308,9 @@ var Service = GObject.registerClass({
             Gio.DBusCallFlags.NONE,
             -1,
             this._cancellable,
-            (proxy, res) => {
+            (connection, res) => {
                 try {
-                    const reply = proxy.call_finish(res);
+                    const reply = connection.call_finish(res);
                     const [result] = reply.deepUnpack();
 
                     // The two expected results are DBUS_START_REPLY_SUCCESS
