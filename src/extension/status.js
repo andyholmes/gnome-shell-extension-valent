@@ -304,6 +304,9 @@ const MenuToggle = GObject.registerClass({
     }
 
     _onDestroy(_actor) {
+        if (this._installedId)
+            Shell.AppSystem.get_default().disconnect(this._installedId);
+
         this.service.disconnect(this._activeChangedId);
         this.service.disconnect(this._deviceAddedId);
         this.service.disconnect(this._deviceRemovedId);
@@ -334,6 +337,15 @@ const MenuToggle = GObject.registerClass({
         this._sync();
     }
 
+    _onInstalledChanged(appSystem) {
+        if (appSystem.lookup_app('ca.andyholmes.Valent.desktop') === null)
+            return;
+
+        appSystem.disconnect(this._installedId);
+        this._installedId = 0;
+        this._sync();
+    }
+
     _onServiceActivated() {
         const app = Shell.AppSystem.get_default().lookup_app(
             'ca.andyholmes.Valent.desktop');
@@ -353,6 +365,15 @@ const MenuToggle = GObject.registerClass({
     }
 
     _sync() {
+        const app = Shell.AppSystem.get_default().lookup_app(
+            'ca.andyholmes.Valent.desktop');
+
+        if (app === null && !this._installedId) {
+            this._installedId = Shell.AppSystem.get_default().connect('installed-changed',
+                this._onInstalledChanged.bind(this));
+        }
+
+        // Menu Toggle
         const connectedDevices = this.service.devices.filter(device => {
             return (device.state & Remote.DeviceState.CONNECTED) !== 0 &&
                    (device.state & Remote.DeviceState.PAIRED) !== 0;
@@ -372,12 +393,10 @@ const MenuToggle = GObject.registerClass({
             ? this._activeIcon
             : this._inactiveIcon;
 
-        // Placeholder
+        // Menu Items
         let placeholderLabel = '';
         let serviceIcon = null;
         let serviceLabel = '';
-        const app = Shell.AppSystem.get_default().lookup_app(
-            'ca.andyholmes.Valent.desktop');
 
         if (app === null) {
             placeholderLabel = _('Valent must be installed to connect and sync devices');

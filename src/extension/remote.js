@@ -321,11 +321,11 @@ var Service = GObject.registerClass({
                             message: `Unexpected reply: ${result}`,
                         });
                     }
-
-                    this._activating = false;
                 } catch (e) {
                     if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
                         logError(e);
+                } finally {
+                    this._activating = false;
                 }
             }
         );
