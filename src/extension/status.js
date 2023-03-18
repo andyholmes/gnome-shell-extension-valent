@@ -245,13 +245,6 @@ const MenuToggle = GObject.registerClass({
     constructor(params = {}) {
         super(params);
 
-        this._activeIcon = Gio.Icon.new_for_string(
-            `file://${Extension.path}/data/phonelink-symbolic.svg`);
-        this._inactiveIcon = Gio.Icon.new_for_string(
-            `file://${Extension.path}/data/phonelink-off-symbolic.svg`);
-        this._infoIcon = Gio.Icon.new_for_string(
-            `file://${Extension.path}/data/valent-info-symbolic.svg`);
-
         this._activeChangedId = this.service.connect('notify::active',
             this._sync.bind(this));
         this._deviceAddedId = this.service.connect('device-added',
@@ -259,7 +252,7 @@ const MenuToggle = GObject.registerClass({
         this._deviceRemovedId = this.service.connect('device-removed',
             this._onDeviceRemoved.bind(this));
 
-        this.menu.setHeader(this._activeIcon, _('Devices'));
+        this.menu.setHeader(Extension.getIcon('active'), _('Devices'));
 
         // Devices
         this._deviceItems = new Map();
@@ -390,8 +383,8 @@ const MenuToggle = GObject.registerClass({
 
         this.checked = this.service.active;
         this.gicon = this.service.active
-            ? this._activeIcon
-            : this._inactiveIcon;
+            ? Extension.getIcon('active')
+            : Extension.getIcon('inactive');
 
         // Menu Items
         let placeholderLabel = '';
@@ -401,7 +394,7 @@ const MenuToggle = GObject.registerClass({
         if (app === null) {
             placeholderLabel = _('Valent must be installed to connect and sync devices');
             serviceLabel = _('Help');
-            serviceIcon = this._infoIcon;
+            serviceIcon = Extension.getIcon('info');
             this._serviceItem.add_style_class_name('valent-help-item');
         } else if (this.service.active) {
             placeholderLabel = _('No available or connected devices');
@@ -440,8 +433,7 @@ var Indicator = GObject.registerClass({
 
         // Indicator Icon
         this._icon = this._addIndicator();
-        this._icon.gicon = Gio.Icon.new_for_string(
-            `file://${Extension.path}/data/phonelink-symbolic.svg`);
+        this._icon.gicon = Extension.getIcon('active');
         this._icon.visible = false;
 
         // Service Toggle
