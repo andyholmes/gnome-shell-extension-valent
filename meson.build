@@ -16,11 +16,9 @@ extuuid = 'valent@andyholmes.ca'
 # Paths
 prefix = get_option('prefix')
 datadir = join_paths(prefix, get_option('datadir'))
-libdir = join_paths(prefix, get_option('libdir'))
 localedir = join_paths(prefix, get_option('localedir'))
 
 extensionsdir = join_paths(datadir, 'gnome-shell', 'extensions')
-pluginsdir = join_paths(libdir, 'valent', 'plugins')
 
 
 # Install

@@ -7,8 +7,7 @@
 [Valent][valent] is an implementation of the [KDE Connect][kdeconnect] protocol,
 built on [GNOME][gnome] platform libraries.
 
-This GNOME Shell extension helps Valent integrate with the GNOME desktop. The
-bundled Python plugin is used by Valent to communicate with the extension.
+This GNOME Shell extension helps Valent integrate with the GNOME desktop.
 
 ## Installation
 
@@ -33,17 +32,11 @@ meson install -C _build
 ### Sandbox Permissions
 
 If Valent is running in a sandbox, it will need your permission to talk to
-`org.gnome.Shell` on the session bus and access the filesystem at
-`XDG_DATA_HOME/valent/plugins/gnome-shell`.
+`org.gnome.Shell` on the session bus. Flatpak users can grant permission using
+[Flatseal][flatseal] or with the `flatpak override` command:
 
-Flatpak users can grant these permissions using [Flatseal][flatseal] or with the
-`flatpak override` command:
-
-```
-flatpak override --user \
-                 --filesystem=xdg-data/valent/plugins/gnome-shell \
-                 --talk-name=org.gnome.Shell \
-                 ca.andyholmes.Valent
+```sh
+flatpak override --user --talk-name=org.gnome.Shell ca.andyholmes.Valent
 ```
 
 ## Status

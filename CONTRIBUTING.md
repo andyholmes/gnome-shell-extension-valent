@@ -58,9 +58,8 @@ CI will let you know if something needs to be changed.
 
 ### Testing
 
-The CI will run `eslint` on the GNOME Shell extension and `pylint` on the
-Python3 plugin, but has no unit tests. Be sure to manually test the
-functionality of any changes you submit for review.
+The CI will run `eslint` on the GNOME Shell extension, but has no unit tests. Be
+sure to manually test the functionality of any changes you submit for review.
 
 
 ## Licensing

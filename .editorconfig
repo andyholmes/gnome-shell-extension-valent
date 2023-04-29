@@ -8,7 +8,7 @@ insert_final_newline = true
 end_of_line = lf
 charset = utf-8
 
-[*.{js,json,py,css}]
+[*.{js,json,css}]
 indent_style = space
 indent_size = 4
 
