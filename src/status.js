@@ -451,10 +451,16 @@ var Indicator = GObject.registerClass({
     _addItems(items) {
         QuickSettingsMenu._addItems(items);
 
-        // Ensure the tile(s) are above the background apps menu
         for (const item of items) {
+            // Ensure the tile(s) are above the background apps menu
             QuickSettingsMenu.menu._grid.set_child_below_sibling(item,
                 QuickSettingsMenu._backgroundApps.quickSettingsItems[0]);
+
+            // Ensure no use-after-free occurs
+            item.connect('destroy', actor => {
+                this.quickSettingsItems.splice(
+                    this.quickSettingsItems.indexOf(actor), 1);
+            });
         }
     }
 
