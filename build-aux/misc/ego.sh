@@ -19,13 +19,11 @@ ZIPDIR="${DESTDIR}/${UUID}"
 
 # Setup
 meson setup --prefix=/usr \
-            --libdir=lib \
             "${BUILDDIR}"
 meson install -C "${BUILDDIR}"
 
 # Copy the installed files into a zippable directory
-mkdir -p "${ZIPDIR}"/plugin
-cp -pr "${DESTDIR}"/usr/lib/valent/plugins/* "${ZIPDIR}/plugin/"
+mkdir -p "${ZIPDIR}"
 cp -pr "${DESTDIR}"/usr/share/gnome-shell/extensions/"${UUID}"/* "${ZIPDIR}"
 cp -pr "${DESTDIR}"/usr/share/locale "${ZIPDIR}"
 
