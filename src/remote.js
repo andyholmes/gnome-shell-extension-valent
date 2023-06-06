@@ -127,7 +127,7 @@ var Device = GObject.registerClass({
  */
 var Service = GObject.registerClass({
     GTypeName: 'ValentRemoteService',
-    Implements: [Gio.DBusInterface],
+    Implements: [Gio.DBusInterface, Gio.ListModel],
     Properties: {
         'active': GObject.ParamSpec.boolean(
             'active',
@@ -136,16 +136,6 @@ var Service = GObject.registerClass({
             GObject.ParamFlags.READABLE,
             false
         ),
-    },
-    Signals: {
-        'device-added': {
-            flags: GObject.SignalFlags.RUN_FIRST,
-            param_types: [Device.$gtype],
-        },
-        'device-removed': {
-            flags: GObject.SignalFlags.RUN_FIRST,
-            param_types: [Device.$gtype],
-        },
     },
 }, class Service extends Gio.DBusProxy {
     constructor() {
@@ -160,7 +150,7 @@ var Service = GObject.registerClass({
 
         this._activating = false;
         this._cancellable = new Gio.Cancellable();
-        this._devices = new Map();
+        this._items = [];
 
         this.init_async(GLib.PRIORITY_DEFAULT, this._cancellable,
             this._initCallback.bind(this));
@@ -173,10 +163,6 @@ var Service = GObject.registerClass({
         return this._active;
     }
 
-    get devices() {
-        return Array.from(this._devices.values());
-    }
-
     on_g_signal(senderName_, signalName, parameters) {
         const args = parameters.deepUnpack();
 
@@ -184,6 +170,23 @@ var Service = GObject.registerClass({
             this._onInterfacesAdded(...args);
         else if (signalName === 'InterfacesRemoved')
             this._onInterfacesRemoved(...args);
+    }
+
+    vfunc_get_item(position) {
+        return this._items[position] || null;
+    }
+
+    vfunc_get_item_type() {
+        return Device.$gtype;
+    }
+
+    vfunc_get_n_items() {
+        return this._items.length;
+    }
+
+    *[Symbol.iterator]() {
+        for (const item of this._items)
+            yield item;
     }
 
     _initCallback(service, result) {
@@ -203,11 +206,12 @@ var Service = GObject.registerClass({
         try {
             device.init_finish(result);
 
-            if (this._devices.has(device.g_object_path))
+            if (this._items.some(item => item.id === device.id))
                 return;
 
-            this._devices.set(device.g_object_path, device);
-            this.emit('device-added', device);
+            const position = this._items.length;
+            this._items.push(device);
+            this.items_changed(position, 0, 1);
         } catch (e) {
             if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
                 logError(e, device.g_object_path);
@@ -230,17 +234,14 @@ var Service = GObject.registerClass({
     }
 
     _onInterfacesRemoved(objectPath, interfaces) {
-        // An empty interface list means the object is being removed
-        if (interfaces.length === 0)
+        const position = this._items.findIndex(
+            item => item.g_object_path === objectPath);
+
+        if (position === -1)
             return;
 
-        const device = this._devices.get(objectPath);
-
-        if (device === undefined)
-            return;
-
-        this._devices.delete(objectPath);
-        this.emit('device-removed', device);
+        this._items.splice(position, 1);
+        this.items_changed(position, 1, 0);
     }
 
     _onNameOwnerChanged() {
@@ -281,10 +282,9 @@ var Service = GObject.registerClass({
     }
 
     _unloadDevices() {
-        for (const [objectPath, device] of this._devices) {
-            this._devices.delete(objectPath);
-            this.emit('device-removed', device);
-        }
+        const removed = this._items.length;
+        this._items.length = 0;
+        this.items_changed(0, removed, 0);
     }
 
     /**
