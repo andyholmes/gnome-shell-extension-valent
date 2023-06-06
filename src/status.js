@@ -247,15 +247,13 @@ const MenuToggle = GObject.registerClass({
 
         this._activeChangedId = this.service.connect('notify::active',
             this._sync.bind(this));
-        this._deviceAddedId = this.service.connect('device-added',
-            this._onDeviceAdded.bind(this));
-        this._deviceRemovedId = this.service.connect('device-removed',
-            this._onDeviceRemoved.bind(this));
+        this._itemsChangedId = this.service.connect('items-changed',
+            this._onItemsChanged.bind(this));
 
         this.menu.setHeader(Extension.getIcon('active'), _('Devices'));
 
         // Devices
-        this._deviceItems = new Map();
+        this._deviceItems = [];
         this._deviceSection = new PopupMenu.PopupMenuSection();
         this.menu.addMenuItem(this._deviceSection);
 
@@ -301,8 +299,7 @@ const MenuToggle = GObject.registerClass({
             Shell.AppSystem.get_default().disconnect(this._installedId);
 
         this.service.disconnect(this._activeChangedId);
-        this.service.disconnect(this._deviceAddedId);
-        this.service.disconnect(this._deviceRemovedId);
+        this.service.disconnect(this._itemsChangedId);
     }
 
     _onDeviceActivated(item) {
@@ -313,19 +310,20 @@ const MenuToggle = GObject.registerClass({
         this.service.activate_action('window', target);
     }
 
-    _onDeviceAdded(_service, device) {
-        const menuItem = new DeviceMenuItem(device);
-        menuItem.connect('activate', this._onDeviceActivated.bind(this));
-        menuItem.connect('notify::visible', this._sync.bind(this));
-        this._deviceSection.addMenuItem(menuItem);
-        this._deviceItems.set(device, menuItem);
+    _onItemsChanged(service, position, removed, added) {
+        for (const menuItem of this._deviceItems.splice(position, removed))
+            menuItem.destroy();
 
-        this._sync();
-    }
+        for (let i = 0; i < added; i++) {
+            const device = service.get_item(position + i);
 
-    _onDeviceRemoved(_service, device) {
-        this._deviceItems.get(device)?.destroy();
-        this._deviceItems.delete(device);
+            const menuItem = new DeviceMenuItem(device);
+            menuItem.connect('activate', this._onDeviceActivated.bind(this));
+            menuItem.connect('notify::visible', this._sync.bind(this));
+            this._deviceSection.addMenuItem(menuItem, position + i);
+
+            this._deviceItems.splice(position + i, 0, menuItem);
+        }
 
         this._sync();
     }
@@ -367,7 +365,7 @@ const MenuToggle = GObject.registerClass({
         }
 
         // Menu Toggle
-        const connectedDevices = this.service.devices.filter(device => {
+        const connectedDevices = [...this.service].filter(device => {
             return (device.state & Remote.DeviceState.CONNECTED) !== 0 &&
                    (device.state & Remote.DeviceState.PAIRED) !== 0;
         });
@@ -424,12 +422,9 @@ var Indicator = GObject.registerClass({
         super();
 
         // Service Proxy
-        this._devices = new WeakMap();
         this._service = new Remote.Service();
-        this._service.connect('device-added',
-            this._onDeviceAdded.bind(this));
-        this._service.connect('device-removed',
-            this._onDeviceRemoved.bind(this));
+        this._service.connect('items-changed',
+            this._onItemsChanged.bind(this));
 
         // Indicator Icon
         this._icon = this._addIndicator();
@@ -458,8 +453,10 @@ var Indicator = GObject.registerClass({
 
             // Ensure no use-after-free occurs
             item.connect('destroy', actor => {
-                this.quickSettingsItems.splice(
-                    this.quickSettingsItems.indexOf(actor), 1);
+                const position = this.quickSettingsItems.indexOf(actor);
+
+                if (position > -1)
+                    this.quickSettingsItems.splice(position, 1);
             });
         }
     }
@@ -469,26 +466,17 @@ var Indicator = GObject.registerClass({
         this.quickSettingsItems.forEach(item => item.destroy());
     }
 
-    _onDeviceAdded(_service, device) {
-        const stateChangedId = device.connect('notify::state',
-            this._sync.bind(this));
+    _onItemsChanged(service, position, _removed, added) {
+        for (let i = 0; i < added; i++) {
+            const device = service.get_item(position + i);
+            device.connect('notify::state', this._sync.bind(this));
+        }
 
-        this._devices.set(device, stateChangedId);
-        this._sync();
-    }
-
-    _onDeviceRemoved(_service, device) {
-        const stateChangedId = this._devices.get(device);
-
-        if (stateChangedId)
-            device.disconnect(stateChangedId);
-
-        this._devices.delete(device);
         this._sync();
     }
 
     _sync() {
-        const connectedDevices = this._service.devices.filter(device => {
+        const connectedDevices = [...this._service].filter(device => {
             return (device.state & Remote.DeviceState.CONNECTED) !== 0 &&
                    (device.state & Remote.DeviceState.PAIRED) !== 0;
         });
