@@ -29,16 +29,6 @@ meson setup --prefix=/usr _build
 meson install -C _build
 ```
 
-### Sandbox Permissions
-
-If Valent is running in a sandbox, it will need your permission to talk to
-`org.gnome.Shell` on the session bus. Flatpak users can grant permission using
-[Flatseal][flatseal] or with the `flatpak override` command:
-
-```sh
-flatpak override --user --talk-name=org.gnome.Shell ca.andyholmes.Valent
-```
-
 ## Status
 
 This project is in an early stage of development, with no stable releases. For
