@@ -8,7 +8,6 @@ const { Gio } = imports.gi;
 const ExtensionUtils = imports.misc.extensionUtils;
 const Extension = ExtensionUtils.getCurrentExtension();
 
-const Clipboard = Extension.imports.clipboard;
 const Notification = Extension.imports.notification;
 const Session = Extension.imports.session;
 const Status = Extension.imports.status;
@@ -27,7 +26,6 @@ Extension.getIcon = function (name) {
 
 
 let serviceIndicator = null;
-let clipboardInterface = null;
 
 
 /** */
@@ -43,9 +41,6 @@ function enable() {
 
     if (serviceIndicator === null)
         serviceIndicator = new Status.Indicator();
-
-    if (clipboardInterface === null)
-        clipboardInterface = new Clipboard.Clipboard();
 }
 
 
@@ -56,8 +51,5 @@ function disable() {
 
     serviceIndicator?.destroy();
     serviceIndicator = null;
-
-    clipboardInterface?.destroy();
-    clipboardInterface = null;
 }
 
