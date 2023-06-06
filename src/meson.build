@@ -3,7 +3,6 @@
 # SPDX-FileCopyrightText: Andy Holmes <andrew.g.r.holmes@gmail.com>
 
 extension_sources = [
-  'clipboard.js',
   'extension.js',
   'notification.js',
   'remote.js',
