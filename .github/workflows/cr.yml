@@ -5,11 +5,9 @@ on:
     branches: [main]
     paths:
       - 'build-aux/docker/Dockerfile'
-      - 'build-aux/docker/Dockerfile.toolbox'
   pull_request:
     paths:
       - 'build-aux/docker/Dockerfile'
-      - 'build-aux/docker/Dockerfile.toolbox'
   schedule:
     # Once a week to keep dependencies up to date
     - cron: 0 0 * * 0
@@ -34,14 +32,10 @@ jobs:
       matrix:
         label:
           - CI
-          - Toolbox
         include:
           - label: CI
             file: ./build-aux/docker/Dockerfile
             image: ghcr.io/${{ github.repository }}
-          - label: Toolbox
-            file: ./build-aux/docker/Dockerfile.toolbox
-            image: ghcr.io/${{ github.repository }}-toolbox
       fail-fast: false
 
     steps:

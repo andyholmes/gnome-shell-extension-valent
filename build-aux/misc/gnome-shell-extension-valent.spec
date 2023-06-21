@@ -2,11 +2,10 @@
 %global debug_package %{nil}
 
 %global gnome_shell_version 44.0
-%global libpeas_version     1.22.0
 %global valent_version      1.0.0.alpha
 
 Name:           gnome-shell-extension-valent
-Version:        1~alpha
+Version:        1.0.0~alpha
 Release:        1%{?dist}
 Summary:        GNOME Shell integration for Valent
 
@@ -47,6 +46,6 @@ This GNOME Shell extension helps Valent integrate with the GNOME desktop.
 %{_datadir}/gnome-shell/extensions/valent@andyholmes.ca/
 
 %changelog
-* Sat Apr 29 2023 Andy Holmes <andrew.g.r.holmes@gmail.com> - 1-1
+* Tue Jun 6 2023 Andy Holmes <andrew.g.r.holmes@gmail.com> - 1-1
 - Initial release
 
