@@ -6,7 +6,7 @@ eslint = find_program('eslint', required: false)
 
 if eslint.found()
   test('ESLint', eslint,
-           args: join_paths(meson.project_source_root(), 'src', 'extension'),
+           args: join_paths(meson.project_source_root(), 'src'),
     is_parallel: true,
           suite: 'lint',
   )
