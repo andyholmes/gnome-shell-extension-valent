@@ -150,8 +150,7 @@ const DeviceBattery = GObject.registerClass({
             use_default_fallbacks: false,
         });
         this._icon.fallback_icon_name = iconFallback;
-
-        this._label.text = isPresent ? `${Math.floor(percentage)}%` : '';
+        this._label.text = isPresent ? _('%d\u2009%%').format(percentage) : '';
         this.visible = isPresent;
     }
 
