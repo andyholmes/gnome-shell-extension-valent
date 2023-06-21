@@ -44,7 +44,15 @@ function enable() {
 }
 
 
-/** */
+/**
+ * Disable the extension.
+ *
+ * The extension will be re-enabled in the `unlock-dialog` session mode so that
+ * quick settings behave like other services, and modifications to components
+ * like notifications will remain while Valent runs in the background.
+ *
+ * See: https://gjs.guide/extensions/review-guidelines/review-guidelines#session-modes
+ */
 function disable() {
     Notification.unpatchNotificationSources();
     Session.disable();
