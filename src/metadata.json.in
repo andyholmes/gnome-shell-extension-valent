@@ -3,7 +3,6 @@
     "name": "@EXTENSION_NAME@",
     "description": "GNOME Shell integration for Valent.\n\nValent is an implementation of the KDE Connect protocol, built on GNOME platform libraries.",
     "gettext-domain": "@GETTEXT_DOMAIN@",
-    "version": @EXTENSION_VERSION@,
     "session-modes": ["unlock-dialog", "user"],
     "shell-version": ["44"],
     "url": "https://valent.andyholmes.ca"
