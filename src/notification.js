@@ -3,7 +3,7 @@
 
 /* exported patchNotificationSources, unpatchNotificationSources */
 
-const { Gio, GLib, GObject, St } = imports.gi;
+const {Gio, GLib, GObject, St} = imports.gi;
 
 const Main = imports.ui.main;
 const MessageTray = imports.ui.messageTray;

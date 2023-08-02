@@ -3,7 +3,7 @@
 
 /* exported enable, disable */
 
-const { ScreenShield } = imports.ui.screenShield;
+const {ScreenShield} = imports.ui.screenShield;
 
 // Overridden methods
 const _deactivate = ScreenShield.prototype.deactivate;

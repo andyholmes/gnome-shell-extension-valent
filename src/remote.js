@@ -3,7 +3,7 @@
 
 /* exported Service, Device, DeviceState */
 
-const { Gio, GLib, GObject } = imports.gi;
+const {Gio, GLib, GObject} = imports.gi;
 
 const APPLICATION_ID = 'ca.andyholmes.Valent';
 const APPLICATION_PATH = '/ca/andyholmes/Valent';
@@ -233,7 +233,7 @@ var Service = GObject.registerClass({
             this._deviceInitCallback.bind(this));
     }
 
-    _onInterfacesRemoved(objectPath, interfaces) {
+    _onInterfacesRemoved(objectPath, _interfaces) {
         const position = this._items.findIndex(
             item => item.g_object_path === objectPath);
 
