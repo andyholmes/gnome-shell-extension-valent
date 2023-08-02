@@ -3,7 +3,7 @@
 
 /* exported Indicator */
 
-const { Clutter, Gio, GLib, GObject, Pango, Shell, St } = imports.gi;
+const {Clutter, Gio, GLib, GObject, Pango, Shell, St} = imports.gi;
 
 const Main = imports.ui.main;
 const PopupMenu = imports.ui.popupMenu;
@@ -199,7 +199,7 @@ const DeviceMenuItem = GObject.registerClass({
         this.add_child(this._label);
         this.label_actor = this._label;
 
-        this._battery = new DeviceBattery({ visible: false });
+        this._battery = new DeviceBattery({visible: false});
         this.add_child(this._battery);
 
         this.bind_property('device', this._battery, 'device',

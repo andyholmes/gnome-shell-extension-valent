@@ -3,7 +3,7 @@
 
 /* exported init */
 
-const { Gio } = imports.gi;
+const {Gio} = imports.gi;
 
 const ExtensionUtils = imports.misc.extensionUtils;
 const ExtensionMeta = ExtensionUtils.getCurrentExtension();
@@ -57,7 +57,7 @@ class Extension {
 
 
 /** */
-function init(meta) {
+function init() {
     ExtensionUtils.initTranslations();
 
     return new Extension();
