@@ -32,41 +32,25 @@ var DeviceState = Object.freeze({
 /**
  * A simple proxy wrapper for devices exported over DBus.
  */
-var Device = GObject.registerClass({
-    GTypeName: 'ValentRemoteDevice',
-    Implements: [Gio.DBusInterface],
-    Properties: {
-        'icon-name': GObject.ParamSpec.string(
-            'icon-name',
-            'Icon Name',
-            'A symbolic icon name for the device',
-            GObject.ParamFlags.READABLE,
-            null
-        ),
-        'id': GObject.ParamSpec.string(
-            'id',
-            'ID',
-            'A unique ID for the device',
-            GObject.ParamFlags.READABLE,
-            null
-        ),
-        'name': GObject.ParamSpec.string(
-            'name',
-            'Name',
-            'A display name for the device',
-            GObject.ParamFlags.READABLE,
-            null
-        ),
-        'state': GObject.ParamSpec.uint(
-            'state',
-            'State',
-            'The state of the device',
+var Device = class Device extends Gio.DBusProxy {
+    static [GObject.interfaces] = [Gio.DBusInterface];
+    static [GObject.properties] = {
+        'icon-name': GObject.ParamSpec.string('icon-name', null, null,
+            GObject.ParamFlags.READABLE, null),
+        'id': GObject.ParamSpec.string('id', null, null,
+            GObject.ParamFlags.READABLE, null),
+        'name': GObject.ParamSpec.string('name', null, null,
+            GObject.ParamFlags.READABLE, null),
+        'state': GObject.ParamSpec.uint('state', null, null,
             GObject.ParamFlags.READABLE,
             DeviceState.NONE, DeviceState.CONNECTED | DeviceState.PAIRED_OUTGOING,
-            DeviceState.NONE
-        ),
-    },
-}, class Device extends Gio.DBusProxy {
+            DeviceState.NONE),
+    };
+
+    static {
+        GObject.registerClass(this);
+    }
+
     constructor(params = {}) {
         super({
             g_interface_name: 'ca.andyholmes.Valent.Device',
@@ -119,25 +103,23 @@ var Device = GObject.registerClass({
     get state() {
         return this._get('State', DeviceState.NONE);
     }
-});
+};
 
 
 /**
  * A simple proxy wrapper for the GSConnect service.
  */
-var Service = GObject.registerClass({
-    GTypeName: 'ValentRemoteService',
-    Implements: [Gio.DBusInterface, Gio.ListModel],
-    Properties: {
-        'active': GObject.ParamSpec.boolean(
-            'active',
-            'Active',
-            'Whether the service is active',
-            GObject.ParamFlags.READABLE,
-            false
-        ),
-    },
-}, class Service extends Gio.DBusProxy {
+var Service = class Service extends Gio.DBusProxy {
+    static [GObject.interfaces] = [Gio.DBusInterface, Gio.ListModel];
+    static [GObject.properties] = {
+        'active': GObject.ParamSpec.boolean('active', null, null,
+            GObject.ParamFlags.READABLE, false),
+    };
+
+    static {
+        GObject.registerClass(this);
+    }
+
     constructor() {
         super({
             g_bus_type: Gio.BusType.SESSION,
@@ -406,5 +388,5 @@ var Service = GObject.registerClass({
             this._active = false;
         }
     }
-});
+};
 

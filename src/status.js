@@ -45,18 +45,16 @@ function _getBatteryIcon(percentage, charging) {
 /**
  * A battery widget with an icon and text percentage.
  */
-const DeviceBattery = GObject.registerClass({
-    GTypeName: 'ValentDeviceBattery',
-    Properties: {
-        'device': GObject.ParamSpec.object(
-            'device',
-            'Device',
-            'The remote device',
-            GObject.ParamFlags.READWRITE,
-            Remote.Device
-        ),
-    },
-}, class DeviceBattery extends St.BoxLayout {
+class DeviceBattery extends St.BoxLayout {
+    static [GObject.properties] = {
+        'device': GObject.ParamSpec.object('device', null, null,
+            GObject.ParamFlags.READWRITE, Remote.Device),
+    };
+
+    static {
+        GObject.registerClass(this);
+    }
+
     constructor(params = {}) {
         super({
             style_class: 'valent-device-battery',
@@ -161,24 +159,22 @@ const DeviceBattery = GObject.registerClass({
         for (const handlerId of this._actionHandlerIds)
             this.device.action_group.disconnect(handlerId);
     }
-});
+}
 
 
 /**
  * A menu item for devices.
  */
-const DeviceMenuItem = GObject.registerClass({
-    GTypeName: 'ValentDeviceMenuItem',
-    Properties: {
-        'device': GObject.ParamSpec.object(
-            'device',
-            'Device',
-            'The remote device',
-            GObject.ParamFlags.READWRITE,
-            Remote.Device
-        ),
-    },
-}, class DeviceMenuItem extends PopupMenu.PopupBaseMenuItem {
+class DeviceMenuItem extends PopupMenu.PopupBaseMenuItem {
+    static [GObject.properties] = {
+        'device': GObject.ParamSpec.object('device', null, null,
+            GObject.ParamFlags.READWRITE, Remote.Device),
+    };
+
+    static {
+        GObject.registerClass(this);
+    }
+
     constructor(device) {
         super();
 
@@ -223,24 +219,22 @@ const DeviceMenuItem = GObject.registerClass({
         this.visible = (device.state & Remote.DeviceState.CONNECTED) !== 0 &&
                        (device.state & Remote.DeviceState.PAIRED) !== 0;
     }
-});
+}
 
 
 /**
  * The quick settings menu for Valent.
  */
-const MenuToggle = GObject.registerClass({
-    GTypeName: 'ValentMenuToggle',
-    Properties: {
-        'service': GObject.ParamSpec.object(
-            'service',
-            'Service',
-            'The remote service',
-            GObject.ParamFlags.READWRITE,
-            Remote.Service.$gtype
-        ),
-    },
-}, class MenuToggle extends QuickSettings.QuickMenuToggle {
+class MenuToggle extends QuickSettings.QuickMenuToggle {
+    static [GObject.properties] = {
+        'service': GObject.ParamSpec.object('service', null, null,
+            GObject.ParamFlags.READWRITE, Remote.Service),
+    };
+
+    static {
+        GObject.registerClass(this);
+    }
+
     constructor(params = {}) {
         super(params);
 
@@ -408,15 +402,17 @@ const MenuToggle = GObject.registerClass({
         this._serviceItem.label.text = serviceLabel;
         this._serviceItem.setIcon(serviceIcon);
     }
-});
+}
 
 
 /**
  * The service indicator for Valent.
  */
-var Indicator = GObject.registerClass({
-    GTypeName: 'ValentIndicator',
-}, class Indicator extends QuickSettings.SystemIndicator {
+var Indicator = class Indicator extends QuickSettings.SystemIndicator {
+    static {
+        GObject.registerClass(this);
+    }
+
     constructor() {
         super();
 
@@ -482,5 +478,5 @@ var Indicator = GObject.registerClass({
 
         this._icon.visible = connectedDevices.length > 0;
     }
-});
+};
 

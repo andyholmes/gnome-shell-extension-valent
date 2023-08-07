@@ -25,9 +25,11 @@ const _pushNotification = NotificationDaemon.GtkNotificationDaemonAppSource.prot
 /**
  * A slightly modified Notification Banner with an entry field
  */
-const NotificationBanner = GObject.registerClass({
-    GTypeName: 'ValentNotificationBanner',
-}, class NotificationBanner extends MessageTray.NotificationBanner {
+class NotificationBanner extends MessageTray.NotificationBanner {
+    static {
+        GObject.registerClass(this);
+    }
+
     constructor(notification) {
         super(notification);
 
@@ -160,7 +162,7 @@ const NotificationBanner = GObject.registerClass({
         this._closed = true;
         this.destroy();
     }
-});
+}
 
 
 /**
@@ -168,9 +170,11 @@ const NotificationBanner = GObject.registerClass({
  * notifications. This source is never instantiated; it's methods are patched
  * into existing sources.
  */
-const Source = GObject.registerClass({
-    GTypeName: 'ValentNotificationSource',
-}, class Source extends NotificationDaemon.GtkNotificationDaemonAppSource {
+class Source extends NotificationDaemon.GtkNotificationDaemonAppSource {
+    static {
+        GObject.registerClass(this);
+    }
+
     _valentCloseNotification(notification, reason) {
         if (reason !== MessageTray.NotificationDestroyedReason.DISMISSED)
             return;
@@ -292,7 +296,7 @@ const Source = GObject.registerClass({
     createBanner(notification) {
         return new NotificationBanner(notification);
     }
-});
+}
 
 
 let _sourceAddedId = null;
