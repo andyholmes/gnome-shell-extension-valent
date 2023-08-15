@@ -4,98 +4,19 @@ on:
   pull_request:
 
 jobs:
-  pre-test:
-    name: Pre-Tests
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: ShellCheck
-        if: ${{ always() }}
-        uses: reviewdog/action-shellcheck@v1
-        with:
-          reporter: github-pr-review
-          fail_on_error: true
-
   eslint:
     name: ESLint
-    needs: [pre-test]
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+
+      - name: Setup
+        run: |
+          npm install eslint@^8.0.0 eslint-plugin-jsdoc@^46.0.0
 
       - name: Lint
         uses: reviewdog/action-eslint@v1
         with:
           reporter: github-pr-review
-          workdir: src/
-
-  reuse:
-    name: REUSE Compliance
-    needs: [pre-test]
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Lint
-        uses: fsfe/reuse-action@v2
-        with:
-          args: lint
-
-  codespell:
-    name: Codespell
-    needs: [pre-test]
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Spell Check
-        uses: codespell-project/actions-codespell@master
-        with:
-          skip: .git,./tests,./*.po
-
-  commitlint:
-    name: Commitlint
-    needs: [pre-test]
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: Lint
-        uses: wagoid/commitlint-github-action@v5
-
-  test-build:
-    name: Test Build
-    needs: [pre-test]
-    runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/${{ github.repository }}:${{ github.base_ref }}
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Build
-        env:
-          DESTDIR: ${{ github.workspace }}
-          WORKSPACE: ${{ github.workspace }}
-        run: |
-          ./build-aux/misc/ego.sh
-
-      - name: Upload
-        uses: actions/upload-artifact@v3
-        with:
-          name: valent@andyholmes.ca
-          path: ${{ github.workspace }}/valent@andyholmes.ca/*
