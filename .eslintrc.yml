@@ -4,8 +4,6 @@
 env:
   es2021: true
 extends: 'eslint:recommended'
-plugins:
-  - jsdoc
 rules:
   array-bracket-newline:
     - error
@@ -21,11 +19,10 @@ rules:
   block-scoped-var: error
   block-spacing: error
   brace-style: error
-  # Waiting for this to have matured a bit in eslint
-  # camelcase:
-  #   - error
-  #   - properties: never
-  #     allow: [^vfunc_, ^on_, _instance_init]
+  camelcase:
+    - error
+    - properties: never
+      allow: [^vfunc_, ^on_, _instance_init]
   comma-dangle:
     - error
     - arrays: always-multiline
@@ -39,6 +36,7 @@ rules:
     - error
     - last
   computed-property-spacing: error
+  consistent-return: error
   curly:
     - error
     - multi-or-nest
@@ -57,26 +55,6 @@ rules:
   indent:
     - error
     - 4
-    - ignoredNodes:
-      # Allow not indenting the body of GObject.registerClass, since in the
-      # future it's intended to be a decorator
-      - 'CallExpression[callee.object.name=GObject][callee.property.name=registerClass] > ClassExpression:first-child'
-      # Allow dedenting chained member expressions
-      MemberExpression: 'off'
-  jsdoc/check-alignment: error
-  jsdoc/check-param-names: error
-  jsdoc/check-tag-names: error
-  jsdoc/check-types: error
-  jsdoc/implements-on-classes: error
-  jsdoc/tag-lines:
-    - error
-    - any
-    - startLines: 1
-  jsdoc/require-jsdoc: error
-  jsdoc/require-param: error
-  jsdoc/require-param-description: error
-  jsdoc/require-param-name: error
-  jsdoc/require-param-type: error
   key-spacing:
     - error
     - beforeColon: false
@@ -128,40 +106,6 @@ rules:
   no-proto: error
   no-prototype-builtins: 'off'
   no-restricted-globals: [error, window]
-  no-restricted-properties:
-    - error
-    - object: imports
-      property: format
-      message: Use template strings
-    - object: pkg
-      property: initFormat
-      message: Use template strings
-    - object: Lang
-      property: copyProperties
-      message: Use Object.assign()
-    - object: Lang
-      property: bind
-      message: Use arrow notation or Function.prototype.bind()
-    - object: Lang
-      property: Class
-      message: Use ES6 classes
-  no-restricted-syntax:
-    - error
-    - selector: >-
-        MethodDefinition[key.name="_init"] >
-        FunctionExpression[params.length=1] >
-        BlockStatement[body.length=1]
-        CallExpression[arguments.length=1][callee.object.type="Super"][callee.property.name="_init"] >
-        Identifier:first-child
-      message: _init() that only calls super._init() is unnecessary
-    - selector: >-
-        MethodDefinition[key.name="_init"] >
-        FunctionExpression[params.length=0] >
-        BlockStatement[body.length=1]
-        CallExpression[arguments.length=0][callee.object.type="Super"][callee.property.name="_init"]
-      message: _init() that only calls super._init() is unnecessary
-    - selector: BinaryExpression[operator="instanceof"][right.name="Array"]
-      message: Use Array.isArray()
   no-return-assign: error
   no-return-await: error
   no-self-compare: error
@@ -202,9 +146,8 @@ rules:
   padded-blocks:
     - error
     - never
-  # These may be a bit controversial, we can try them out and enable them later
-  # prefer-const: error
-  # prefer-destructuring: error
+  prefer-arrow-callback: error
+  prefer-const: error
   prefer-numeric-literals: error
   prefer-promise-reject-errors: error
   prefer-rest-params: error
@@ -247,9 +190,6 @@ rules:
     - inside
   yield-star-spacing: error
   yoda: error
-settings:
-  jsdoc:
-    mode: typescript
 globals:
   ARGV: readonly
   Debugger: readonly
@@ -269,39 +209,7 @@ globals:
   setInterval: readonly
   clearTimeout: readonly
   clearInterval: readonly
+  # Shell.global
+  global: readonly
 parserOptions:
   ecmaVersion: 2022
-
-overrides:
-  # GNOME Shell's `.eslintrc-shell.yml`
-  - files: src/**
-    rules:
-      camelcase:
-        - error
-        - properties: never
-          allow: [^vfunc_, ^on_]
-      consistent-return: error
-      eqeqeq:
-        - error
-        - smart
-      key-spacing:
-        - error
-        - mode: minimum
-          beforeColon: false
-          afterColon: true
-      prefer-arrow-callback: error
-      jsdoc/require-param-description: off
-    globals:
-      global: readonly
-      _: readonly
-      C_: readonly
-      N_: readonly
-      ngettext: readonly
-
-  - files: src/**
-    globals:
-      _: off
-      C_: off
-      N_: off
-      ngettext: off
-
