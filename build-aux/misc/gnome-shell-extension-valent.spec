@@ -1,7 +1,7 @@
 %global tarball_version %%(echo %{version} | tr '~' '.')
 %global debug_package %{nil}
 
-%global gnome_shell_version 44.0
+%global gnome_shell_version 45.0
 %global valent_version      1.0.0.alpha
 
 Name:           gnome-shell-extension-valent
