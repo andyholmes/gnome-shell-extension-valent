@@ -4,8 +4,7 @@ on:
   push:
     branches:
       - main
-      - gnome-42
-      - gnome-43
+      - gnome-44
   workflow_dispatch:
 
 permissions:
