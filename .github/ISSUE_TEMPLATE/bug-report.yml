@@ -31,8 +31,7 @@ body:
     attributes:
       label: GNOME Version
       options:
-        - 43
-        - 44
+        - 45
         - Other (please specify)
     validations:
       required: true
@@ -41,7 +40,7 @@ body:
     id: gnome-other
     attributes:
       label: Other Version
-      placeholder: 44.beta, 44.1, ...
+      placeholder: 45.beta, 45.1, ...
     validations:
       required: false
 
