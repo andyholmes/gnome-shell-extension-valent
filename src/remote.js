@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: Andy Holmes <andrew.g.r.holmes@gmail.com>
 
-/* exported Service, Device, DeviceState */
-
-const {Gio, GLib, GObject} = imports.gi;
+import GLib from 'gi://GLib';
+import GObject from 'gi://GObject';
+import Gio from 'gi://Gio';
 
 const APPLICATION_ID = 'ca.andyholmes.Valent';
 const APPLICATION_PATH = '/ca/andyholmes/Valent';
@@ -15,7 +15,7 @@ const APPLICATION_PATH = '/ca/andyholmes/Valent';
  * @readonly
  * @enum {number}
  */
-var DeviceState = Object.freeze({
+export const DeviceState = Object.freeze({
     /** Device unpaired and disconnected */
     NONE: 0,
     /** Device is connected */
@@ -32,7 +32,7 @@ var DeviceState = Object.freeze({
 /**
  * A simple proxy wrapper for devices exported over DBus.
  */
-var Device = class Device extends Gio.DBusProxy {
+export class Device extends Gio.DBusProxy {
     static [GObject.interfaces] = [Gio.DBusInterface];
     static [GObject.properties] = {
         'icon-name': GObject.ParamSpec.string('icon-name', null, null,
@@ -103,13 +103,13 @@ var Device = class Device extends Gio.DBusProxy {
     get state() {
         return this._get('State', DeviceState.NONE);
     }
-};
+}
 
 
 /**
  * A simple proxy wrapper for the GSConnect service.
  */
-var Service = class Service extends Gio.DBusProxy {
+export class Service extends Gio.DBusProxy {
     static [GObject.interfaces] = [Gio.DBusInterface, Gio.ListModel];
     static [GObject.properties] = {
         'active': GObject.ParamSpec.boolean('active', null, null,
@@ -388,5 +388,5 @@ var Service = class Service extends Gio.DBusProxy {
             this._active = false;
         }
     }
-};
+}
 

@@ -1,29 +1,39 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: Andy Holmes <andrew.g.r.holmes@gmail.com>
 
-/* exported patchNotificationSources, unpatchNotificationSources */
+import GLib from 'gi://GLib';
+import GObject from 'gi://GObject';
+import Gio from 'gi://Gio';
+import St from 'gi://St';
 
-const {Gio, GLib, GObject, St} = imports.gi;
-
-const Main = imports.ui.main;
-const MessageTray = imports.ui.messageTray;
-const NotificationDaemon = imports.ui.notificationDaemon;
-
-const ExtensionUtils = imports.misc.extensionUtils;
-const _ = ExtensionUtils.gettext;
+import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import * as MessageTray from 'resource:///org/gnome/shell/ui/messageTray.js';
+import {GtkNotificationDaemonAppSource} from 'resource:///org/gnome/shell/ui/notificationDaemon.js';
 
 const APPLICATION_ID = 'ca.andyholmes.Valent';
 const APPLICATION_PATH = '/ca/andyholmes/Valent';
 const DEVICE_REGEX = /^(.+?)::notification::(.+)$/;
 
-// Overridden methods
-const _addNotification = NotificationDaemon.GtkNotificationDaemonAppSource.prototype.addNotification;
-const _createBanner = NotificationDaemon.GtkNotificationDaemonAppSource.prototype.createBanner;
-const _pushNotification = NotificationDaemon.GtkNotificationDaemonAppSource.prototype.pushNotification;
+// Overrides
+const MAX_NOTIFICATIONS_PER_SOURCE = 9;
 
+const appSourceMethods = {
+    addNotification: GtkNotificationDaemonAppSource.prototype.addNotification,
+    createBanner: GtkNotificationDaemonAppSource.prototype.createBanner,
+    pushNotification: GtkNotificationDaemonAppSource.prototype.pushNotification,
+    _valentCloseNotification: undefined,
+    _valentRemoveNotification: undefined,
+};
+
+
+function _getPlatformData() {
+    const startupId = GLib.Variant.new('s', `_TIME${global.get_current_time()}`);
+    return {'desktop-startup-id': startupId};
+}
 
 /**
- * A slightly modified Notification Banner with an entry field
+ * A custom Notification Banner with an entry field.
  */
 class NotificationBanner extends MessageTray.NotificationBanner {
     static {
@@ -135,26 +145,19 @@ class NotificationBanner extends MessageTray.NotificationBanner {
             deviceActionName,
             [new GLib.Variant('(ssv)', [replyId, replyMessage, replyNotification])],
         ]);
-        const platformData = NotificationDaemon.getPlatformData();
 
         Gio.DBus.session.call(
             APPLICATION_ID,
             APPLICATION_PATH,
             'org.freedesktop.Application',
             'ActivateAction',
-            new GLib.Variant('(sava{sv})', ['device', [target], platformData]),
+            new GLib.Variant('(sava{sv})', ['device', [target],
+                _getPlatformData()]),
             null,
             Gio.DBusCallFlags.NO_AUTO_START,
             -1,
             null,
-            (connection, res) => {
-                try {
-                    connection.call_finish(res);
-                } catch {
-                    // Silence errors
-                }
-            }
-        );
+            null);
 
         // We want the notification banner to disappear, but we don't want
         // close() to be invoked, because that will result in the notification
@@ -166,11 +169,9 @@ class NotificationBanner extends MessageTray.NotificationBanner {
 
 
 /**
- * A custom notification source for spawning notifications and closing device
- * notifications. This source is never instantiated; it's methods are patched
- * into existing sources.
+ * A custom notification source for Valent.
  */
-class Source extends NotificationDaemon.GtkNotificationDaemonAppSource {
+class Source extends GtkNotificationDaemonAppSource {
     static {
         GObject.registerClass(this);
     }
@@ -190,26 +191,19 @@ class Source extends NotificationDaemon.GtkNotificationDaemonAppSource {
             'notification.close',
             [GLib.Variant.new_string(notification.remoteId)],
         ]);
-        const platformData = NotificationDaemon.getPlatformData();
 
         Gio.DBus.session.call(
             APPLICATION_ID,
             APPLICATION_PATH,
             'org.freedesktop.Application',
             'ActivateAction',
-            new GLib.Variant('(sava{sv})', ['device', [target], platformData]),
+            new GLib.Variant('(sava{sv})', ['device', [target],
+                _getPlatformData()]),
             null,
             Gio.DBusCallFlags.NO_AUTO_START,
             -1,
             null,
-            (connection, res) => {
-                try {
-                    connection.call_finish(res);
-                } catch {
-                    // Silence errors
-                }
-            }
-        );
+            null);
     }
 
     /*
@@ -274,7 +268,7 @@ class Source extends NotificationDaemon.GtkNotificationDaemonAppSource {
     }
 
     /*
-     * Override to raise the usual notification limit from 3 to 10
+     * Override to raise the usual notification limit from 3.
      *
      * See: https://gitlab.gnome.org/GNOME/gnome-shell/blob/main/js/ui/messageTray.js
      */
@@ -282,7 +276,7 @@ class Source extends NotificationDaemon.GtkNotificationDaemonAppSource {
         if (this.notifications.includes(notification))
             return;
 
-        while (this.notifications.length >= 10)
+        while (this.notifications.length >= MAX_NOTIFICATIONS_PER_SOURCE)
             this.notifications.shift().destroy(MessageTray.NotificationDestroyedReason.EXPIRED);
 
         notification.connect('destroy', this._onNotificationDestroy.bind(this));
@@ -301,12 +295,6 @@ class Source extends NotificationDaemon.GtkNotificationDaemonAppSource {
 
 let _sourceAddedId = null;
 
-/**
- * Callback for `MessageTray.MessageTray::source-added`.
- *
- * @param {MessageTray.MessageTray} messageTray - The message tray
- * @param {MessageTray.Source} source - The notification source
- */
 function _onSourceAdded(messageTray, source) {
     if (source?._appId !== APPLICATION_ID)
         return;
@@ -319,12 +307,12 @@ function _onSourceAdded(messageTray, source) {
     });
 }
 
-/** */
-function _patchValentNotificationSource() {
-    const notificationDaemon = Main.notificationDaemon._gtkNotificationDaemon;
-    const source = notificationDaemon._sources[APPLICATION_ID];
+export function enable() {
+    // Patch Valent's notification source
+    const gtkNotifications = Main.notificationDaemon._gtkNotificationDaemon;
+    const source = gtkNotifications._sources[APPLICATION_ID];
 
-    if (source !== undefined) {
+    if (source) {
         Object.assign(source, {
             _valentCloseNotification: Source.prototype._valentCloseNotification,
             addNotification: Source.prototype.addNotification,
@@ -341,31 +329,8 @@ function _patchValentNotificationSource() {
     }
 
     _sourceAddedId = Main.messageTray.connect('source-added', _onSourceAdded);
-}
 
-/** */
-function _unpatchValentNotificationSource() {
-    const notificationDaemon = Main.notificationDaemon._gtkNotificationDaemon;
-    const source = notificationDaemon._sources[APPLICATION_ID];
-
-    if (source !== undefined) {
-        Object.assign(source, {
-            addNotification: _addNotification,
-            createBanner: _createBanner,
-            pushNotification: _pushNotification,
-            _valentCloseNotification: undefined,
-        });
-    }
-
-    if (_sourceAddedId) {
-        Main.messageTray.disconnect(_sourceAddedId);
-        _sourceAddedId = null;
-    }
-}
-
-/** */
-function _patchGtkNotificationSources() {
-    // eslint-disable-next-line func-style
+    // Patch other applications' notification sources
     const addNotification = function (notificationId, notificationParams, showBanner) {
         this._notificationPending = true;
 
@@ -387,7 +352,6 @@ function _patchGtkNotificationSources() {
         this._notificationPending = false;
     };
 
-    // eslint-disable-next-line func-style
     const _valentRemoveNotification = function (id, notification, reason) {
         if (reason !== MessageTray.NotificationDestroyedReason.DISMISSED)
             return;
@@ -402,45 +366,27 @@ function _patchGtkNotificationSources() {
             Gio.DBusCallFlags.NO_AUTO_START,
             -1,
             null,
-            null
-        );
+            null);
     };
 
-    Object.assign(NotificationDaemon.GtkNotificationDaemonAppSource.prototype, {
+    Object.assign(GtkNotificationDaemonAppSource.prototype, {
         addNotification,
         _valentRemoveNotification,
     });
 }
 
-/** */
-function _unpatchGtkNotificationSources() {
-    Object.assign(NotificationDaemon.GtkNotificationDaemonAppSource.prototype, {
-        addNotification: _addNotification,
-        _valentRemoveNotification: undefined,
-    });
-}
+export function disable() {
+    if (_sourceAddedId) {
+        Main.messageTray.disconnect(_sourceAddedId);
+        _sourceAddedId = null;
+    }
 
+    const gtkNotifications = Main.notificationDaemon._gtkNotificationDaemon;
+    const source = gtkNotifications._sources[APPLICATION_ID];
 
-/**
- * Patch notification sources.
- *
- * 1. Modify Valent's notification source so that devices are notified when
- *    their notifications are closed, repliable notifications get a text entry,
- *    exact duplicates are ignore and the limit on notification count is raised.
- *
- * 2. Ensure other applications call org.gtk.Notifications.RemoveNotification()
- *    when notifications are dismissed.
- */
-function patchNotificationSources() {
-    _patchValentNotificationSource();
-    _patchGtkNotificationSources();
-}
+    if (source)
+        Object.assign(source, appSourceMethods);
 
-/**
- * Revert the modifications performed in patchNotificationSources().
- */
-function unpatchNotificationSources() {
-    _unpatchValentNotificationSource();
-    _unpatchGtkNotificationSources();
+    Object.assign(GtkNotificationDaemonAppSource.prototype, appSourceMethods);
 }
 
