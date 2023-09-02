@@ -1,37 +1,16 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: Andy Holmes <andrew.g.r.holmes@gmail.com>
 
-/* exported init */
+import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-const {Gio} = imports.gi;
-
-const ExtensionUtils = imports.misc.extensionUtils;
-const ExtensionMeta = ExtensionUtils.getCurrentExtension();
-
-const Notification = ExtensionMeta.imports.notification;
-const Session = ExtensionMeta.imports.session;
-const Status = ExtensionMeta.imports.status;
+import * as Notification from './notification.js';
+import * as Session from './session.js';
+import * as Status from './status.js';
 
 
-/**
- * Get a `Gio.Icon` for a name.
- *
- * @param {string} name - An icon name
- * @returns {Gio.Icon} a `Gio.Icon`
- */
-ExtensionMeta.getIcon = function (name) {
-    return Gio.Icon.new_for_string(
-        `file://${this.path}/icons/valent-${name}-symbolic.svg`);
-};
-
-
-class Extension {
-    constructor() {
-        this._indicator = null;
-    }
-
+export default class ValentExtension extends Extension {
     enable() {
-        Notification.patchNotificationSources();
+        Notification.enable();
         Session.enable();
 
         this._indicator = new Status.Indicator();
@@ -40,26 +19,18 @@ class Extension {
     /**
      * Disable the extension.
      *
-     * The extension will be re-enabled in the `unlock-dialog` session mode so that
-     * quick settings behave like other services, and modifications to components
-     * like notifications will remain while Valent runs in the background.
+     * The extension will be re-enabled in the `unlock-dialog` session mode so
+     * that quick settings behave like other services, and modifications to
+     * components will remain while Valent runs in the background.
      *
      * See: https://gjs.guide/extensions/review-guidelines/review-guidelines#session-modes
      */
     disable() {
-        Notification.unpatchNotificationSources();
+        Notification.disable();
         Session.disable();
 
         this._indicator?.destroy();
         this._indicator = null;
     }
-}
-
-
-/** */
-function init() {
-    ExtensionUtils.initTranslations();
-
-    return new Extension();
 }
 

@@ -148,6 +148,7 @@ rules:
     - never
   prefer-arrow-callback: error
   prefer-const: error
+  prefer-destructuring: error
   prefer-numeric-literals: error
   prefer-promise-reject-errors: error
   prefer-rest-params: error
@@ -213,3 +214,10 @@ globals:
   global: readonly
 parserOptions:
   ecmaVersion: 2022
+  sourceType: module
+
+overrides:
+  - files: src/notification.js
+    rules:
+      func-style: off
+      no-invalid-this: off

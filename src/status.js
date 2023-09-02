@@ -1,22 +1,20 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: Andy Holmes <andrew.g.r.holmes@gmail.com>
 
-/* exported Indicator */
+import GLib from 'gi://GLib';
+import GObject from 'gi://GObject';
+import Gio from 'gi://Gio';
+import Pango from 'gi://Pango';
+import Clutter from 'gi://Clutter';
+import St from 'gi://St';
+import Shell from 'gi://Shell';
 
-const {Clutter, Gio, GLib, GObject, Pango, Shell, St} = imports.gi;
+import {Extension, gettext as _, ngettext} from 'resource:///org/gnome/shell/extensions/extension.js';
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
+import * as QuickSettings from 'resource:///org/gnome/shell/ui/quickSettings.js';
 
-const Main = imports.ui.main;
-const PopupMenu = imports.ui.popupMenu;
-const QuickSettings = imports.ui.quickSettings;
-const QuickSettingsMenu = Main.panel.statusArea.quickSettings;
-
-const ExtensionUtils = imports.misc.extensionUtils;
-const Extension = ExtensionUtils.getCurrentExtension();
-
-const Remote = Extension.imports.remote;
-
-const _ = ExtensionUtils.gettext;
-const ngettext = ExtensionUtils.ngettext;
+import * as Remote from './remote.js';
 
 
 /**
@@ -26,7 +24,7 @@ const ngettext = ExtensionUtils.ngettext;
  * @param {boolean} charging - whether the battery is charging
  * @returns {string} a themed icon name
  */
-function _getBatteryIcon(percentage, charging) {
+function _getBatteryIconName(percentage, charging) {
     // This is particular to KDE Connect
     if (percentage < 0)
         return 'battery-missing-symbolic';
@@ -39,6 +37,19 @@ function _getBatteryIcon(percentage, charging) {
     return charging
         ? `battery-level-${level}-charging-symbolic`
         : `battery-level-${level}-symbolic`;
+}
+
+
+/**
+ * Get a `Gio.Icon` for a name.
+ *
+ * @param {string} name - An icon name
+ * @returns {Gio.Icon} a `Gio.Icon`
+ */
+function _getIcon(name) {
+    const dir = Gio.File.new_for_uri(import.meta.url).get_parent();
+    return Gio.Icon.new_for_string(
+        `${dir.get_uri()}/icons/valent-${name}-symbolic.svg`);
 }
 
 
@@ -144,7 +155,7 @@ class DeviceBattery extends St.BoxLayout {
 
         // Disable GThemedIcon's default fallbacks
         this._icon.gicon = new Gio.ThemedIcon({
-            name: _getBatteryIcon(percentage, charging),
+            name: _getBatteryIconName(percentage, charging),
             use_default_fallbacks: false,
         });
         this._icon.fallback_icon_name = iconFallback;
@@ -243,7 +254,7 @@ class MenuToggle extends QuickSettings.QuickMenuToggle {
         this._itemsChangedId = this.service.connect('items-changed',
             this._onItemsChanged.bind(this));
 
-        this.menu.setHeader(Extension.getIcon('active'), _('Devices'));
+        this.menu.setHeader(_getIcon('active'), _('Devices'));
 
         // Devices
         this._deviceItems = [];
@@ -335,7 +346,8 @@ class MenuToggle extends QuickSettings.QuickMenuToggle {
             'ca.andyholmes.Valent.desktop');
 
         if (app === null) {
-            Gio.app_info_launch_default_for_uri(Extension.metadata.url,
+            const ExtensionMeta = Extension.lookupByUUID('valent@andyholmes.ca');
+            Gio.app_info_launch_default_for_uri(ExtensionMeta.metadata.url,
                 global.create_app_launch_context(0, -1));
         } else if (this.service.active) {
             const target = GLib.Variant.new_string('main');
@@ -373,9 +385,7 @@ class MenuToggle extends QuickSettings.QuickMenuToggle {
             this.subtitle = null;
 
         this.checked = this.service.active;
-        this.gicon = this.service.active
-            ? Extension.getIcon('active')
-            : Extension.getIcon('inactive');
+        this.gicon = _getIcon(this.service.active ? 'active' : 'inactive');
 
         // Menu Items
         let placeholderLabel = '';
@@ -385,7 +395,7 @@ class MenuToggle extends QuickSettings.QuickMenuToggle {
         if (app === null) {
             placeholderLabel = _('Valent must be installed to connect and sync devices');
             serviceLabel = _('Help');
-            serviceIcon = Extension.getIcon('info');
+            serviceIcon = _getIcon('info');
             this._serviceItem.add_style_class_name('valent-help-item');
         } else if (this.service.active) {
             placeholderLabel = _('No available or connected devices');
@@ -408,7 +418,7 @@ class MenuToggle extends QuickSettings.QuickMenuToggle {
 /**
  * The service indicator for Valent.
  */
-var Indicator = class Indicator extends QuickSettings.SystemIndicator {
+export class Indicator extends QuickSettings.SystemIndicator {
     static {
         GObject.registerClass(this);
     }
@@ -423,7 +433,7 @@ var Indicator = class Indicator extends QuickSettings.SystemIndicator {
 
         // Indicator Icon
         this._icon = this._addIndicator();
-        this._icon.gicon = Extension.getIcon('active');
+        this._icon.gicon = _getIcon('active');
         this._icon.visible = false;
 
         // Service Toggle
@@ -431,29 +441,11 @@ var Indicator = class Indicator extends QuickSettings.SystemIndicator {
             service: this._service,
             title: _('Devices'),
         });
+        menuToggle.connect('destroy', () => this.quickSettingsItems.pop());
         this.quickSettingsItems.push(menuToggle);
 
-        this._addItems(this.quickSettingsItems);
-        QuickSettingsMenu._indicators.insert_child_at_index(this, 0);
+        Main.panel.statusArea.quickSettings.addExternalIndicator(this);
         this.connect('destroy', this._onDestroy.bind(this));
-    }
-
-    _addItems(items) {
-        QuickSettingsMenu._addItems(items);
-
-        for (const item of items) {
-            // Ensure the tile(s) are above the background apps menu
-            QuickSettingsMenu.menu._grid.set_child_below_sibling(item,
-                QuickSettingsMenu._backgroundApps.quickSettingsItems[0]);
-
-            // Ensure no use-after-free occurs
-            item.connect('destroy', actor => {
-                const position = this.quickSettingsItems.indexOf(actor);
-
-                if (position > -1)
-                    this.quickSettingsItems.splice(position, 1);
-            });
-        }
     }
 
     _onDestroy(_actor) {
@@ -478,5 +470,5 @@ var Indicator = class Indicator extends QuickSettings.SystemIndicator {
 
         this._icon.visible = connectedDevices.length > 0;
     }
-};
+}
 

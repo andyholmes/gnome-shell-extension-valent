@@ -29,4 +29,3 @@ install_subdir('icons',
   install_dir: join_paths(extensionsdir, extuuid),
 )
 
-
