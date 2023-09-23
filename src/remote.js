@@ -75,7 +75,7 @@ export class Device extends Gio.DBusProxy {
             for (const name in changed.deepUnpack())
                 this.notify(properties[name]);
         } catch (e) {
-            logError(e);
+            console.error(e);
         }
     }
 
@@ -180,7 +180,7 @@ export class Service extends Gio.DBusProxy {
             this._onNameOwnerChanged();
         } catch (e) {
             if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
-                logError(e);
+                console.warning(e);
         }
     }
 
@@ -196,7 +196,7 @@ export class Service extends Gio.DBusProxy {
             this.items_changed(position, 0, 1);
         } catch (e) {
             if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
-                logError(e, device.g_object_path);
+                console.warning(e);
         }
     }
 
@@ -257,7 +257,7 @@ export class Service extends Gio.DBusProxy {
                     });
                 } catch (e) {
                     if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
-                        logError(e);
+                        console.warning(e);
                 }
             }
         );
@@ -305,7 +305,7 @@ export class Service extends Gio.DBusProxy {
                     }
                 } catch (e) {
                     if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
-                        logError(e);
+                        console.warning(e);
                 } finally {
                     this._activating = false;
                 }
@@ -340,7 +340,7 @@ export class Service extends Gio.DBusProxy {
                     connection.call_finish(res);
                 } catch (e) {
                     if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
-                        logError(e);
+                        console.warning(e);
                 }
             }
         );
@@ -367,7 +367,7 @@ export class Service extends Gio.DBusProxy {
                     connection.call_finish(res);
                 } catch (e) {
                     if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
-                        logError(e);
+                        console.warning(e);
                 }
             }
         );
