@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gnome-shell-extension-valent\n"
 "Report-Msgid-Bugs-To: https://github.com/andyholmes/gnome-shell-extension-"
 "valent/issues\n"
-"POT-Creation-Date: 2023-06-21 09:44-0700\n"
+"POT-Creation-Date: 2023-09-23 11:13-0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -20,48 +20,43 @@ msgstr ""
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 
 #. TRANSLATORS: A notification button to show the quick-reply entry
-#: src/notification.js:59
+#: src/notification.js:71
 msgid "Reply"
 msgstr ""
 
 #. TRANSLATORS: A reply entry in a notification
-#: src/notification.js:69
+#: src/notification.js:81
 msgid "Type a message"
 msgstr ""
 
-#: src/status.js:153
-#, javascript-format
-msgid "%d %%"
-msgstr ""
-
-#: src/status.js:252 src/status.js:436
+#: src/status.js:260 src/status.js:445
 msgid "Devices"
 msgstr ""
 
-#: src/status.js:277 src/status.js:398 src/status.js:402
+#: src/status.js:285 src/status.js:405 src/status.js:409
 msgid "All Devices"
 msgstr ""
 
 #. TRANSLATORS: This is the number of connected devices
-#: src/status.js:375
+#: src/status.js:384
 #, javascript-format
 msgid "%d Connected"
 msgid_plural "%d Connected"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/status.js:392
+#: src/status.js:399
 msgid "Valent must be installed to connect and sync devices"
 msgstr ""
 
-#: src/status.js:393
+#: src/status.js:400
 msgid "Help"
 msgstr ""
 
-#: src/status.js:397
+#: src/status.js:404
 msgid "No available or connected devices"
 msgstr ""
 
-#: src/status.js:401
+#: src/status.js:408
 msgid "Turn on to connect to devices"
 msgstr ""
