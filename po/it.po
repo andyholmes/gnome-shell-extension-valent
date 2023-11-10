@@ -1,0 +1,63 @@
+# Italian translation for gnome-shell-extension-valent package.
+# Copyright (C) 2022 THE gnome-shell-extension-valent'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the gnome-shell-extension-valent package.
+# Gianni Lerro <glerro@pm.me>, 2023.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gnome-shell-extension-valent\n"
+"Report-Msgid-Bugs-To: https://github.com/andyholmes/gnome-shell-extension-"
+"valent/issues\n"
+"POT-Creation-Date: 2023-09-23 11:13-0700\n"
+"PO-Revision-Date: 2023-11-10 02:30+0100\n"
+"Last-Translator: Gianni Lerro <glerro@pm.me>\n"
+"Language-Team: Italian <>\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"X-Generator: Gtranslator 42.0\n"
+
+#. TRANSLATORS: A notification button to show the quick-reply entry
+#: src/notification.js:71
+msgid "Reply"
+msgstr "Rispondi"
+
+#. TRANSLATORS: A reply entry in a notification
+#: src/notification.js:81
+msgid "Type a message"
+msgstr "Scrivi un messaggio"
+
+#: src/status.js:260 src/status.js:445
+msgid "Devices"
+msgstr "Dispositivi"
+
+#: src/status.js:285 src/status.js:405 src/status.js:409
+msgid "All Devices"
+msgstr "Tutti i dispositivi"
+
+#. TRANSLATORS: This is the number of connected devices
+#: src/status.js:384
+#, javascript-format
+msgid "%d Connected"
+msgid_plural "%d Connected"
+msgstr[0] "%d Connesso"
+msgstr[1] "%d Connessi"
+
+#: src/status.js:399
+msgid "Valent must be installed to connect and sync devices"
+msgstr ""
+"Valent deve essere installato per connettere e sincronizzare i dispositivi"
+
+#: src/status.js:400
+msgid "Help"
+msgstr "Aiuto"
+
+#: src/status.js:404
+msgid "No available or connected devices"
+msgstr "Nessun dispositivo disponibile o connesso"
+
+#: src/status.js:408
+msgid "Turn on to connect to devices"
+msgstr "Attiva per connetterti ai dispositivi"
