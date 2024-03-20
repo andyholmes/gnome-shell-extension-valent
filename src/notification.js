@@ -7,6 +7,7 @@ import Gio from 'gi://Gio';
 import St from 'gi://St';
 
 import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
+import * as Calendar from 'resource:///org/gnome/shell/ui/calendar.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as MessageTray from 'resource:///org/gnome/shell/ui/messageTray.js';
 import {GtkNotificationDaemonAppSource} from 'resource:///org/gnome/shell/ui/notificationDaemon.js';
@@ -35,7 +36,7 @@ function _getPlatformData() {
 /**
  * A custom Notification Banner with an entry field.
  */
-class NotificationBanner extends MessageTray.NotificationBanner {
+class NotificationBanner extends Calendar.NotificationMessage {
     static {
         GObject.registerClass(this);
     }
