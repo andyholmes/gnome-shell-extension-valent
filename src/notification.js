@@ -17,12 +17,8 @@ const APPLICATION_PATH = '/ca/andyholmes/Valent';
 const DEVICE_REGEX = /^(.+?)::notification::(.+)$/;
 
 // Overrides
-const MAX_NOTIFICATIONS_PER_SOURCE = 9;
-
 const appSourceMethods = {
     addNotification: GtkNotificationDaemonAppSource.prototype.addNotification,
-    createBanner: GtkNotificationDaemonAppSource.prototype.createBanner,
-    pushNotification: GtkNotificationDaemonAppSource.prototype.pushNotification,
     _valentCloseNotification: undefined,
     _valentRemoveNotification: undefined,
 };
@@ -267,30 +263,6 @@ class Source extends GtkNotificationDaemonAppSource {
 
         this._notificationPending = false;
     }
-
-    /*
-     * Override to raise the usual notification limit from 3.
-     *
-     * See: https://gitlab.gnome.org/GNOME/gnome-shell/blob/main/js/ui/messageTray.js
-     */
-    pushNotification(notification) {
-        if (this.notifications.includes(notification))
-            return;
-
-        while (this.notifications.length >= MAX_NOTIFICATIONS_PER_SOURCE)
-            this.notifications.shift().destroy(MessageTray.NotificationDestroyedReason.EXPIRED);
-
-        notification.connect('destroy', this._onNotificationDestroy.bind(this));
-        notification.connect('notify::acknowledged', this.countUpdated.bind(this));
-        this.notifications.push(notification);
-        this.emit('notification-added', notification);
-
-        this.countUpdated();
-    }
-
-    createBanner(notification) {
-        return new NotificationBanner(notification);
-    }
 }
 
 
@@ -303,8 +275,6 @@ function _onSourceAdded(messageTray, source) {
     Object.assign(source, {
         _valentCloseNotification: Source.prototype._valentCloseNotification,
         addNotification: Source.prototype.addNotification,
-        pushNotification: Source.prototype.pushNotification,
-        createBanner: Source.prototype.createBanner,
     });
 }
 
@@ -317,8 +287,6 @@ export function enable() {
         Object.assign(source, {
             _valentCloseNotification: Source.prototype._valentCloseNotification,
             addNotification: Source.prototype.addNotification,
-            pushNotification: Source.prototype.pushNotification,
-            createBanner: Source.prototype.createBanner,
         });
 
         for (const notification of Object.values(source._notifications)) {
