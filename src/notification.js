@@ -206,60 +206,30 @@ class Source extends GtkNotificationDaemonAppSource {
     /*
      * Override to control notification spawning
      */
-    addNotification(notificationId, notificationParams, showBanner) {
+    addNotification(notification) {
         this._notificationPending = true;
 
-        // Parse the id to determine if it's from a device
-        let localId = notificationId;
-        let idMatch, deviceId, remoteId;
-
-        if ((idMatch = DEVICE_REGEX.exec(notificationId))) {
-            [, deviceId, remoteId] = idMatch;
-            localId = `${deviceId}|${remoteId}`;
-        }
-
-        let notification = this._notifications[localId];
-
-        /* Check if existing notifications represent an exact repeat and return
-         * early if so. Otherwise, update the notification title and body. */
-        if (notification) {
-            const title = notificationParams.title.unpack();
-            const body = notificationParams?.body.unpack() || null;
-
-            if (notification.title === title &&
-                notification.bannerBodyText === body) {
-                this._notificationPending = false;
-                return;
-            }
-
-            notification.title = title;
-            notification.bannerBodyText = body;
-
-        /* Notify the device when remote notifications are dismissed */
-        } else if (idMatch) {
-            notification = this._createNotification(notificationParams);
-            notification.deviceId = deviceId;
-            notification.remoteId = remoteId;
-
-            notification.connect('destroy', (remoteNotification, reason) => {
-                this._valentCloseNotification(remoteNotification, reason);
-                delete this._notifications[localId];
+        // valent-modifications-begin
+        const [match, deviceId, remoteId] = DEVICE_REGEX.exec(notification.id);
+        if (match) {
+            notification.set({deviceId, remoteId});
+            notification.connect('destroy', (_notification, reason) => {
+                this._valentCloseNotification(notification, reason);
             });
-            this._notifications[localId] = notification;
-
-        /* All other notifications are treated as local desktop notifications */
-        } else {
-            notification = this._createNotification(notificationParams);
-            notification.connect('destroy', () => {
-                delete this._notifications[localId];
-            });
-            this._notifications[localId] = notification;
         }
+        // valent-modifications-end
 
-        if (showBanner)
-            this.showNotification(notification);
-        else
-            this.pushNotification(notification);
+        this._notifications[notification.id]?.destroy(
+            MessageTray.NotificationDestroyedReason.REPLACED);
+
+        notification.connect('destroy', () => {
+            delete this._notifications[notification.id];
+        });
+        this._notifications[notification.id] = notification;
+
+        // valent-modifications-begin
+        MessageTray.Source.prototype.addNotification.call(this, notification);
+        // valent-modifications-end
 
         this._notificationPending = false;
     }
@@ -290,38 +260,40 @@ export function enable() {
         });
 
         for (const notification of Object.values(source._notifications)) {
-            const _id = notification.connect('destroy', (remoteNotification, reason) => {
-                source?._valentCloseNotification(remoteNotification, reason);
-                remoteNotification.disconnect(_id);
+            notification.connect('destroy', (_notification, reason) => {
+                source?._valentCloseNotification(notification, reason);
             });
         }
     }
 
     _sourceAddedId = Main.messageTray.connect('source-added', _onSourceAdded);
 
-    // Patch other applications' notification sources
-    const addNotification = function (notificationId, notificationParams, showBanner) {
+    /* eslint-disable func-style */
+    const addNotification = function (notification) {
         this._notificationPending = true;
 
-        if (this._notifications[notificationId])
-            this._notifications[notificationId].destroy(MessageTray.NotificationDestroyedReason.REPLACED);
-
-        const notification = this._createNotification(notificationParams);
-        notification.connect('destroy', (localNotification, reason) => {
-            this?._valentRemoveNotification(localNotification, reason);
-            delete this._notifications[notificationId];
+        // valent-modifications-begin
+        notification.connect('destroy', (_notification, reason) => {
+            this?._valentRemoveNotification(notification, reason);
         });
-        this._notifications[notificationId] = notification;
+        // valent-modifications-end
 
-        if (showBanner)
-            this.showNotification(notification);
-        else
-            this.pushNotification(notification);
+        this._notifications[notification.id]?.destroy(
+            MessageTray.NotificationDestroyedReason.REPLACED);
+
+        notification.connect('destroy', () => {
+            delete this._notifications[notification.id];
+        });
+        this._notifications[notification.id] = notification;
+
+        // valent-modifications-begin
+        MessageTray.Source.prototype.addNotification.call(this, notification);
+        // valent-modifications-end
 
         this._notificationPending = false;
     };
 
-    const _valentRemoveNotification = function (id, notification, reason) {
+    const _valentRemoveNotification = function (notification, reason) {
         if (reason !== MessageTray.NotificationDestroyedReason.DISMISSED)
             return;
 
@@ -330,13 +302,14 @@ export function enable() {
             '/org/gtk/Notifications',
             'org.gtk.Notifications',
             'RemoveNotification',
-            new GLib.Variant('(ss)', [this._appId, id]),
+            new GLib.Variant('(ss)', [this._appId, notification.id]),
             null,
             Gio.DBusCallFlags.NO_AUTO_START,
             -1,
             null,
             null);
     };
+    /* eslint-enable func-style */
 
     Object.assign(GtkNotificationDaemonAppSource.prototype, {
         addNotification,
