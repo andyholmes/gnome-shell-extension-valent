@@ -4,14 +4,12 @@
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 
 import * as Notification from './notification.js';
-import * as Session from './session.js';
 import * as Status from './status.js';
 
 
 export default class ValentExtension extends Extension {
     enable() {
         Notification.enable();
-        Session.enable();
 
         this._indicator = new Status.Indicator();
     }
@@ -27,7 +25,6 @@ export default class ValentExtension extends Extension {
      */
     disable() {
         Notification.disable();
-        Session.disable();
 
         this._indicator?.destroy();
         this._indicator = null;
