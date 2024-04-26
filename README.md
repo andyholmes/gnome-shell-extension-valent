@@ -29,6 +29,18 @@ meson setup --prefix=/usr _build
 meson install -C _build
 ```
 
+## Compatibility
+
+This extension supports the latest, stable release of GNOME Shell.
+
+When support for a new version of GNOME Shell is about to be added, a new
+branch is made effectively halting development for the current version.
+Contributions are welcome with bug fixes that target these branches, but no
+new features or changes to translatable strings will be accepted.
+
+Note that compatibility with [Valent] may also depend on a particular version,
+since the extension communicates with the D-Bus service.
+
 ## Status
 
 This project is in an early stage of development, with no stable releases. For
