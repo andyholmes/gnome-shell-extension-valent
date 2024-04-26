@@ -4,8 +4,8 @@
 
 **GNOME Shell integration for Valent**
 
-[Valent][valent] is an implementation of the [KDE Connect][kdeconnect] protocol,
-built on [GNOME][gnome] platform libraries.
+[Valent] is an implementation of the [KDE Connect] protocol, built on [GNOME]
+platform libraries.
 
 This GNOME Shell extension helps Valent integrate with the GNOME desktop.
 
@@ -45,15 +45,14 @@ since the extension communicates with the D-Bus service.
 
 This project is in an early stage of development, with no stable releases. For
 those interested in trying out GNOME Shell integration for Valent, there are
-nightly builds available as an [extension ZIP][extension-zip].
+nightly builds available as an [extension ZIP].
 
 Join the community in [Discussions] to ask questions, share ideas and get
 involved in Valent!
 
-[discussions]: https://github.com/andyholmes/valent/discussions
-[extension-zip]: https://nightly.link/andyholmes/gnome-shell-extension-valent/workflows/cd/main/valent@andyholmes.ca.zip
-[flatseal]: https://flathub.org/apps/details/com.github.tchx84.Flatseal
-[gnome]: https://www.gnome.org
+[Discussions]: https://github.com/andyholmes/valent/discussions
+[extension ZIP]: https://nightly.link/andyholmes/gnome-shell-extension-valent/workflows/cd/main/valent@andyholmes.ca.zip
+[GNOME]: https://www.gnome.org
 [kdeconnect]: https://kdeconnect.kde.org
-[valent]: https://github.com/andyholmes/valent
+[Valent]: https://github.com/andyholmes/valent
 
