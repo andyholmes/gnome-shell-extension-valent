@@ -210,8 +210,8 @@ class Source extends GtkNotificationDaemonAppSource {
         this._notificationPending = true;
 
         // valent-modifications-begin
-        const [match, deviceId, remoteId] = DEVICE_REGEX.exec(notification.id);
-        if (match) {
+        const [, deviceId, remoteId] = DEVICE_REGEX.exec(notification.id) ?? [];
+        if (deviceId && remoteId) {
             notification.set({deviceId, remoteId});
             notification.connect('destroy', (_notification, reason) => {
                 this._valentCloseNotification(notification, reason);
