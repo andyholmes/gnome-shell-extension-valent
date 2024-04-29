@@ -4,6 +4,7 @@
 import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
 import Gio from 'gi://Gio';
+import Clutter from 'gi://Clutter';
 import St from 'gi://St';
 
 import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
@@ -77,6 +78,8 @@ class NotificationBanner extends Calendar.NotificationMessage {
             // TRANSLATORS: A reply entry in a notification
             hint_text: _('Type a message'),
             style_class: 'chat-response',
+            input_hints: Clutter.InputContentHintFlags.SPELLCHECK,
+            input_purpose: Clutter.InputContentPurpose.NORMAL,
             x_expand: true,
             visible: false,
         });
