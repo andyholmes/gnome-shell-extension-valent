@@ -96,24 +96,13 @@ class NotificationBanner extends Calendar.NotificationMessage {
     }
 
     _onEntryRequested(_button) {
-        this.focused = true;
-
         for (const child of this._buttonBox.get_children())
             child.visible = child === this._replyEntry;
-
-        // Release the notification focus with the entry focus
-        this._replyEntry.connect('key-focus-out',
-            this._onEntryDismissed.bind(this));
 
         this._replyEntry.clutter_text.connect('activate',
             this._onEntryActivated.bind(this));
 
         this._replyEntry.grab_key_focus();
-    }
-
-    _onEntryDismissed(_entry) {
-        this.focused = false;
-        this.emit('unfocused');
     }
 
     _onEntryActivated(clutterText) {
