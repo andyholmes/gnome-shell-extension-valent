@@ -86,7 +86,7 @@ class NotificationBanner extends Calendar.NotificationMessage {
             can_focus: true,
             // TRANSLATORS: A reply entry in a notification
             hint_text: _('Type a message'),
-            style_class: 'chat-response',
+            style_class: 'notification-button valent-reply-entry',
             input_hints: Clutter.InputContentHintFlags.SPELLCHECK,
             input_purpose: Clutter.InputContentPurpose.NORMAL,
             x_expand: true,
