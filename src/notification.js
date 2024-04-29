@@ -100,7 +100,7 @@ class NotificationMessage extends Calendar.NotificationMessage {
 
         this._replyEntry.clutter_text.text = '';
 
-        if (this._replyEntry?.visible) {
+        if (showEntry) {
             this._replyEntry.grab_key_focus();
             this._replyFocusOutId = this._replyEntry.clutter_text.connect(
                 'key-focus-out', () => this._toggleReplyEntry(false));
@@ -129,10 +129,7 @@ class NotificationMessage extends Calendar.NotificationMessage {
                 this._replyPressEventId = null;
             }
 
-            // FIXME: the keyboard focus is yielded to the notification banner,
-            //        but it still gets lost in `Calendar.NotificationSection`
-            global.stage.set_focus(null);
-            this.grab_key_focus();
+            global.stage.set_key_focus(this.get_parent());
         }
     }
 
