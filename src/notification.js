@@ -5,6 +5,7 @@ import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
 import Gio from 'gi://Gio';
 import Clutter from 'gi://Clutter';
+import Meta from 'gi://Meta';
 import St from 'gi://St';
 
 import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
@@ -180,6 +181,110 @@ class NotificationMessage extends Calendar.NotificationMessage {
 }
 
 /**
+ * A mix-in class for the `MessageTray.MessageTray`.
+ */
+class _MessageTray {
+    /**
+     * Override for device notifications.
+     *
+     * This ensures device notifications that support replies are given a
+     * custom `Calendar.NotificationMessage` with a reply button and entry.
+     */
+    _showNotification() {
+        this._notification = this._notificationQueue.shift();
+        this.emit('queue-changed');
+
+        this._userActiveWhileNotificationShown = this.idleMonitor.get_idletime() <= 1000;
+        if (!this._userActiveWhileNotificationShown) {
+            // If the user isn't active, set up a watch to let us know
+            // when the user becomes active.
+            this.idleMonitor.add_user_active_watch(this._onIdleMonitorBecameActive.bind(this));
+        }
+
+        // valent-modifications-begin
+        this._banner = this._notification?.deviceId
+            ? new NotificationMessage(this._notification)
+            : new Calendar.NotificationMessage(this._notification);
+        // valent-modifications-end
+        this._banner.can_focus = false;
+        this._banner._header.expandButton.visible = false;
+        this._banner.add_style_class_name('notification-banner');
+
+        this._bannerBin.add_child(this._banner);
+
+        this._bannerBin.opacity = 0;
+        this._bannerBin.y = -this._banner.height;
+        this.show();
+
+        Meta.disable_unredirect_for_display(global.display);
+        this._updateShowingNotification();
+
+        let [x, y] = global.get_pointer();
+        // We save the position of the mouse at the time when we started showing the notification
+        // in order to determine if the notification popped up under it. We make that check if
+        // the user starts moving the mouse and _onNotificationHoverChanged() gets called. We don't
+        // expand the notification if it just happened to pop up under the mouse unless the user
+        // explicitly mouses away from it and then mouses back in.
+        this._showNotificationMouseX = x;
+        this._showNotificationMouseY = y;
+        // We save the coordinates of the mouse at the time when we started showing the notification
+        // and then we update it in _notificationTimeout(). We don't pop down the notification if
+        // the mouse is moving towards it or within it.
+        this._lastSeenMouseX = x;
+        this._lastSeenMouseY = y;
+
+        this._resetNotificationLeftTimeout();
+    }
+}
+
+/**
+ * A mix-in class for the `Calendar.NotificationSection`.
+ */
+class _NotificationSection {
+    /**
+     * Override for device notifications.
+     *
+     * This ensures device notifications that support replies are given a
+     * custom `Calendar.NotificationMessage` with a reply button and entry.
+     *
+     * @param {MessageList.Source} source - an event source
+     * @param {MessageTray.Notification} - an event notification
+     */
+    _onNotificationAdded(source, notification) {
+        // valent-modifications-begin
+        const message = source?._appId === APPLICATION_ID
+            ? new NotificationMessage(notification)
+            : new Calendar.NotificationMessage(notification);
+        // valent-modifications-end
+
+        let isUrgent = notification.urgency === MessageTray.Urgency.CRITICAL;
+
+        notification.connectObject(
+            'destroy', () => {
+                if (isUrgent)
+                    this._nUrgent--;
+            },
+            'notify::datetime', () => {
+                // The datetime property changes whenever the notification is updated
+                this.moveMessage(message, isUrgent ? 0 : this._nUrgent, this.mapped);
+            }, this);
+
+        if (isUrgent) {
+            // Keep track of urgent notifications to keep them on top
+            this._nUrgent++;
+        } else if (this.mapped) {
+            // Only acknowledge non-urgent notifications in case it
+            // has important actions that are inaccessible when not
+            // shown as banner
+            notification.acknowledged = true;
+        }
+
+        let index = isUrgent ? 0 : this._nUrgent;
+        this.addMessageAtIndex(message, index, this.mapped);
+    }
+}
+
+/**
  * A mix-in class for `NotificationDaemon.GtkNotificationDaemonAppSource`.
  */
 class _Source {
@@ -288,6 +393,20 @@ function rebindNotificationSource() {
         for (const notification of Object.values(source._notifications))
             source._valentBindNotification(notification);
     }
+
+    // Check if there's an active notification source for Valent
+    const source = sources[APPLICATION_ID];
+    if (!source)
+        return;
+
+    // Reconnect the `Calendar.NotificationSection`'s `notification-added`
+    // handler to ensure it uses the currently defined callback method
+    const notificationSection = Main.panel.statusArea.dateMenu
+        ._messageList._notificationSection;
+    source.disconnectObject(notificationSection);
+    source.connectObject('notification-added',
+        notificationSection._onNotificationAdded.bind(notificationSection),
+        notificationSection);
 }
 
 /**
@@ -310,6 +429,15 @@ export function enable(injectionManager) {
         'addNotification',
         () => _Source.prototype.addNotification);
 
+    const notificationSection = Main.panel.statusArea.dateMenu
+        ._messageList._notificationSection;
+    injectionManager.overrideMethod(notificationSection,
+        '_onNotificationAdded',
+        () => _NotificationSection.prototype._onNotificationAdded);
+    injectionManager.overrideMethod(Main.messageTray,
+        '_showNotification',
+        () => _MessageTray.prototype._showNotification);
+
     rebindNotificationSource();
 }
 
@@ -320,6 +448,14 @@ export function enable(injectionManager) {
  *   instance or prototype modifications.
  */
 export function disable(injectionManager) {
+    const notificationSection = Main.panel.statusArea.dateMenu
+        ._messageList._notificationSection;
+    injectionManager.restoreMethod(notificationSection,
+        '_onNotificationAdded');
+    injectionManager.restoreMethod(Main.messageTray,
+        '_showNotification');
+
+    // This must be done after the notification section, but before the source
     rebindNotificationSource();
 
     injectionManager.restoreMethod(GtkNotificationDaemonAppSource.prototype,
