@@ -84,18 +84,6 @@ class NotificationBanner extends Calendar.NotificationMessage {
             visible: false,
         });
         this._buttonBox.add_child(this._replyEntry);
-
-        // This notification banner is for a repliable notification, so we
-        // prevent the notification from being dismissed when activated.
-        if (this.notification._activatedId) {
-            this.notification.disconnect(this.notification._activatedId);
-            this.notification._activatedId = this.notification.connect_after(
-                'activated',
-                notification => {
-                    notification.destroy(MessageTray.NotificationDestroyedReason.EXPIRED);
-                }
-            );
-        }
     }
 
     _onEntryRequested(_button) {
