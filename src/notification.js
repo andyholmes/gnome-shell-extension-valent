@@ -53,6 +53,15 @@ class NotificationBanner extends Calendar.NotificationMessage {
         }
     }
 
+    /**
+     * Add a reply button and entry
+     *
+     * When the reply button is clicked, all notification buttons are hidden
+     * and the reply entry is revealed with active keyboard focus.
+     *
+     * When the reply entry is activated, unfocused or receives a keypress event
+     * that would cause it to lose focus, the original state is restored.
+     */
     _addReplyAction() {
         if (!this._buttonBox) {
             this._buttonBox = new St.BoxLayout({
@@ -70,7 +79,7 @@ class NotificationBanner extends Calendar.NotificationMessage {
             x_expand: true,
             can_focus: true,
         });
-        button.connect('clicked', this._onEntryRequested.bind(this));
+        button.connect('clicked', () => this._toggleReplyEntry(true));
         this._buttonBox.add_child(button);
 
         this._replyEntry = new St.Entry({
@@ -83,17 +92,55 @@ class NotificationBanner extends Calendar.NotificationMessage {
             x_expand: true,
             visible: false,
         });
+        this._replyEntry.clutter_text.connect('activate',
+            this._onEntryActivated.bind(this));
         this._buttonBox.add_child(this._replyEntry);
     }
 
-    _onEntryRequested(_button) {
-        for (const child of this._buttonBox.get_children())
-            child.visible = child === this._replyEntry;
+    _toggleReplyEntry(showEntry = false) {
+        for (const child of this._buttonBox.get_children()) {
+            if (child === this._replyEntry)
+                child.visible = showEntry;
+            else
+                child.visible = !showEntry;
+        }
 
-        this._replyEntry.clutter_text.connect('activate',
-            this._onEntryActivated.bind(this));
+        this._replyEntry.clutter_text.text = '';
 
-        this._replyEntry.grab_key_focus();
+        if (this._replyEntry?.visible) {
+            this._replyEntry.grab_key_focus();
+            this._replyFocusOutId = this._replyEntry.clutter_text.connect(
+                'key-focus-out', () => this._toggleReplyEntry(false));
+            this._replyPressEventId = this._replyEntry.clutter_text.connect(
+                'key-press-event',
+                (actor, event) => {
+                    switch (event.get_key_symbol()) {
+                    case Clutter.KEY_Escape:
+                    case Clutter.KEY_ISO_Left_Tab:
+                    case Clutter.KEY_Tab:
+                        this._toggleReplyEntry(false);
+                        return Clutter.EVENT_STOP;
+
+                    default:
+                        return Clutter.EVENT_PROPAGATE;
+                    }
+                });
+        } else {
+            if (this._replyFocusOutId) {
+                this._replyEntry.clutter_text.disconnect(this._replyFocusOutId);
+                this._replyFocusOutId = null;
+            }
+
+            if (this._replyPressEventId) {
+                this._replyEntry.clutter_text.disconnect(this._replyPressEventId);
+                this._replyPressEventId = null;
+            }
+
+            // FIXME: the keyboard focus is yielded to the notification banner,
+            //        but it still gets lost in `Calendar.NotificationSection`
+            global.stage.set_focus(null);
+            this.grab_key_focus();
+        }
     }
 
     _onEntryActivated(clutterText) {
@@ -136,11 +183,7 @@ class NotificationBanner extends Calendar.NotificationMessage {
             null,
             null);
 
-        // We want the notification banner to disappear, but we don't want
-        // close() to be invoked, because that will result in the notification
-        // being destroyed.
-        this._closed = true;
-        this.destroy();
+        this._toggleReplyEntry(false);
     }
 }
 
