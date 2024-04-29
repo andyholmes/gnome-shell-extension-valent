@@ -17,23 +17,15 @@ const APPLICATION_ID = 'ca.andyholmes.Valent';
 const APPLICATION_PATH = '/ca/andyholmes/Valent';
 const DEVICE_REGEX = /^(.+?)::notification::(.+)$/;
 
-// Overrides
-const appSourceMethods = {
-    addNotification: GtkNotificationDaemonAppSource.prototype.addNotification,
-    _valentCloseNotification: undefined,
-    _valentRemoveNotification: undefined,
-};
-
-
 function _getPlatformData() {
     const startupId = GLib.Variant.new('s', `_TIME${global.get_current_time()}`);
     return {'desktop-startup-id': startupId};
 }
 
 /**
- * A custom Notification Banner with an entry field.
+ * A custom `Calendar.NotificationMessage` for repliable notifications.
  */
-class NotificationBanner extends Calendar.NotificationMessage {
+class NotificationMessage extends Calendar.NotificationMessage {
     static {
         GObject.registerClass(this);
     }
@@ -187,24 +179,40 @@ class NotificationBanner extends Calendar.NotificationMessage {
     }
 }
 
-
 /**
- * A custom notification source for Valent.
+ * A mix-in class for `NotificationDaemon.GtkNotificationDaemonAppSource`.
  */
-class Source extends GtkNotificationDaemonAppSource {
-    static {
-        GObject.registerClass(this);
+class _Source {
+    _valentBindNotification(notification) {
+        if (notification._valentDestroyId) {
+            notification.disconnect(notification._valentDestroyId);
+            notification._valentDestroyId = null;
+            return;
+        }
+
+        if (this?._appId === APPLICATION_ID) {
+            const deviceNotificationId = DEVICE_REGEX.exec(notification.id);
+            if (deviceNotificationId) {
+                const [, deviceId, remoteId] = deviceNotificationId;
+                notification.set({deviceId, remoteId});
+                notification._valentDestroyId = notification.connect(
+                    'destroy',
+                    (_notification, reason) => {
+                        this._valentCloseNotification(notification, reason);
+                    });
+            }
+        } else {
+            notification._valentDestroyId = notification.connect(
+                'destroy',
+                (_notification, reason) => {
+                    this._valentRemoveNotification(notification, reason);
+                });
+        }
     }
 
     _valentCloseNotification(notification, reason) {
         if (reason !== MessageTray.NotificationDestroyedReason.DISMISSED)
             return;
-
-        // Avoid sending the request multiple times
-        if (notification._remoteClosed || notification.remoteId === undefined)
-            return;
-
-        notification._remoteClosed = true;
 
         const target = new GLib.Variant('(ssav)', [
             notification.deviceId,
@@ -226,103 +234,7 @@ class Source extends GtkNotificationDaemonAppSource {
             null);
     }
 
-    /*
-     * Override to control notification spawning
-     */
-    addNotification(notification) {
-        this._notificationPending = true;
-
-        // valent-modifications-begin
-        const [, deviceId, remoteId] = DEVICE_REGEX.exec(notification.id) ?? [];
-        if (deviceId && remoteId) {
-            notification.set({deviceId, remoteId});
-            notification.connect('destroy', (_notification, reason) => {
-                this._valentCloseNotification(notification, reason);
-            });
-        }
-        // valent-modifications-end
-
-        this._notifications[notification.id]?.destroy(
-            MessageTray.NotificationDestroyedReason.REPLACED);
-
-        notification.connect('destroy', () => {
-            delete this._notifications[notification.id];
-        });
-        this._notifications[notification.id] = notification;
-
-        // valent-modifications-begin
-        MessageTray.Source.prototype.addNotification.call(this, notification);
-        // valent-modifications-end
-
-        this._notificationPending = false;
-    }
-}
-
-
-let _sourceAddedId = null;
-
-function _onSourceAdded(messageTray, source) {
-    if (source?._appId !== APPLICATION_ID)
-        return;
-
-    Object.assign(source, {
-        _valentCloseNotification: Source.prototype._valentCloseNotification,
-        addNotification: Source.prototype.addNotification,
-    });
-}
-
-/**
- * Enable modifications to the notification system
- *
- * @param {InjectionManager} injectionManager - a manager for any class
- *   instance or prototype modifications.
- */
-export function enable(injectionManager) {
-    // Patch Valent's notification source
-    const gtkNotifications = Main.notificationDaemon._gtkNotificationDaemon;
-    const source = gtkNotifications._sources[APPLICATION_ID];
-
-    if (source) {
-        Object.assign(source, {
-            _valentCloseNotification: Source.prototype._valentCloseNotification,
-            addNotification: Source.prototype.addNotification,
-        });
-
-        for (const notification of Object.values(source._notifications)) {
-            notification.connect('destroy', (_notification, reason) => {
-                source?._valentCloseNotification(notification, reason);
-            });
-        }
-    }
-
-    _sourceAddedId = Main.messageTray.connect('source-added', _onSourceAdded);
-
-    /* eslint-disable func-style */
-    const addNotification = function (notification) {
-        this._notificationPending = true;
-
-        // valent-modifications-begin
-        notification.connect('destroy', (_notification, reason) => {
-            this?._valentRemoveNotification(notification, reason);
-        });
-        // valent-modifications-end
-
-        this._notifications[notification.id]?.destroy(
-            MessageTray.NotificationDestroyedReason.REPLACED);
-
-        notification.connect('destroy', () => {
-            delete this._notifications[notification.id];
-        });
-        this._notifications[notification.id] = notification;
-
-        // valent-modifications-begin
-        MessageTray.Source.prototype.addNotification.call(this, notification);
-        // valent-modifications-end
-
-        this._notificationPending = false;
-    };
-
-    const _valentRemoveNotification = function (notification, reason) {
+    _valentRemoveNotification(notification, reason) {
         if (reason !== MessageTray.NotificationDestroyedReason.DISMISSED)
             return;
 
@@ -337,13 +249,68 @@ export function enable(injectionManager) {
             -1,
             null,
             null);
-    };
-    /* eslint-enable func-style */
+    }
 
-    Object.assign(GtkNotificationDaemonAppSource.prototype, {
-        addNotification,
-        _valentRemoveNotification,
-    });
+    /**
+     * Override for device notifications.
+     *
+     * This ensures remote devices are notified when their notifications are
+     * closed by the user. For notifications from other applications, it ensures
+     * `org.gtk.Notifications.Remove()` is invoked to notify Valent.
+     */
+    addNotification(notification) {
+        this._notificationPending = true;
+
+        // valent-modifications-begin
+        this._valentBindNotification(notification);
+        // valent-modifications-end
+
+        this._notifications[notification.id]?.destroy(
+            MessageTray.NotificationDestroyedReason.REPLACED);
+
+        notification.connect('destroy', () => {
+            delete this._notifications[notification.id];
+        });
+        this._notifications[notification.id] = notification;
+
+        // valent-modifications-begin
+        MessageTray.Source.prototype.addNotification.call(this, notification);
+        // valent-modifications-end
+
+        this._notificationPending = false;
+    }
+}
+
+function rebindNotificationSource() {
+    // Connect (or disconnect) from application notifications
+    const sources = Main.notificationDaemon._gtkNotificationDaemon._sources;
+    for (const source of Object.values(sources)) {
+        for (const notification of Object.values(source._notifications))
+            source._valentBindNotification(notification);
+    }
+}
+
+/**
+ * Enable modifications to the notification system
+ *
+ * @param {InjectionManager} injectionManager - a manager for any class
+ *   instance or prototype modifications.
+ */
+export function enable(injectionManager) {
+    injectionManager.overrideMethod(GtkNotificationDaemonAppSource.prototype,
+        '_valentBindNotification',
+        () => _Source.prototype._valentBindNotification);
+    injectionManager.overrideMethod(GtkNotificationDaemonAppSource.prototype,
+        '_valentCloseNotification',
+        () => _Source.prototype._valentCloseNotification);
+    injectionManager.overrideMethod(GtkNotificationDaemonAppSource.prototype,
+        '_valentRemoveNotification',
+        () => _Source.prototype._valentRemoveNotification);
+    injectionManager.overrideMethod(GtkNotificationDaemonAppSource.prototype,
+        'addNotification',
+        () => _Source.prototype.addNotification);
+
+    rebindNotificationSource();
 }
 
 /**
@@ -353,17 +320,15 @@ export function enable(injectionManager) {
  *   instance or prototype modifications.
  */
 export function disable(injectionManager) {
-    if (_sourceAddedId) {
-        Main.messageTray.disconnect(_sourceAddedId);
-        _sourceAddedId = null;
-    }
+    rebindNotificationSource();
 
-    const gtkNotifications = Main.notificationDaemon._gtkNotificationDaemon;
-    const source = gtkNotifications._sources[APPLICATION_ID];
-
-    if (source)
-        Object.assign(source, appSourceMethods);
-
-    Object.assign(GtkNotificationDaemonAppSource.prototype, appSourceMethods);
+    injectionManager.restoreMethod(GtkNotificationDaemonAppSource.prototype,
+        '_valentBindNotification');
+    injectionManager.restoreMethod(GtkNotificationDaemonAppSource.prototype,
+        '_valentCloseNotification');
+    injectionManager.restoreMethod(GtkNotificationDaemonAppSource.prototype,
+        '_valentRemoveNotification');
+    injectionManager.restoreMethod(GtkNotificationDaemonAppSource.prototype,
+        'addNotification');
 }
 
