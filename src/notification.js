@@ -248,7 +248,13 @@ function _onSourceAdded(messageTray, source) {
     });
 }
 
-export function enable() {
+/**
+ * Enable modifications to the notification system
+ *
+ * @param {InjectionManager} injectionManager - a manager for any class
+ *   instance or prototype modifications.
+ */
+export function enable(injectionManager) {
     // Patch Valent's notification source
     const gtkNotifications = Main.notificationDaemon._gtkNotificationDaemon;
     const source = gtkNotifications._sources[APPLICATION_ID];
@@ -317,7 +323,13 @@ export function enable() {
     });
 }
 
-export function disable() {
+/**
+ * Disable modifications to the notification system
+ *
+ * @param {InjectionManager} injectionManager - a manager for any class
+ *   instance or prototype modifications.
+ */
+export function disable(injectionManager) {
     if (_sourceAddedId) {
         Main.messageTray.disconnect(_sourceAddedId);
         _sourceAddedId = null;
