@@ -219,7 +219,7 @@ class _MessageTray {
         Meta.disable_unredirect_for_display(global.display);
         this._updateShowingNotification();
 
-        let [x, y] = global.get_pointer();
+        const [x, y] = global.get_pointer();
         // We save the position of the mouse at the time when we started showing the notification
         // in order to determine if the notification popped up under it. We make that check if
         // the user starts moving the mouse and _onNotificationHoverChanged() gets called. We don't
@@ -257,7 +257,7 @@ class _NotificationSection {
             : new Calendar.NotificationMessage(notification);
         // valent-modifications-end
 
-        let isUrgent = notification.urgency === MessageTray.Urgency.CRITICAL;
+        const isUrgent = notification.urgency === MessageTray.Urgency.CRITICAL;
 
         notification.connectObject(
             'destroy', () => {
@@ -279,7 +279,7 @@ class _NotificationSection {
             notification.acknowledged = true;
         }
 
-        let index = isUrgent ? 0 : this._nUrgent;
+        const index = isUrgent ? 0 : this._nUrgent;
         this.addMessageAtIndex(message, index, this.mapped);
     }
 }
