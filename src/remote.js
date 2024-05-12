@@ -78,7 +78,7 @@ export class Device extends Gio.DBusProxy {
         }
     }
 
-    _get(name, fallback = null) {
+    #get(name, fallback = null) {
         const value = this.get_cached_property(name);
 
         if (value instanceof GLib.Variant)
@@ -88,19 +88,19 @@ export class Device extends Gio.DBusProxy {
     }
 
     get icon_name() {
-        return this._get('IconName', 'computer-symbolic');
+        return this.#get('IconName', 'computer-symbolic');
     }
 
     get id() {
-        return this._get('Id', null);
+        return this.#get('Id', null);
     }
 
     get name() {
-        return this._get('Name', null);
+        return this.#get('Name', null);
     }
 
     get state() {
-        return this._get('State', DeviceState.NONE);
+        return this.#get('State', DeviceState.NONE);
     }
 }
 
@@ -118,6 +118,12 @@ export class Service extends Gio.DBusProxy {
         GObject.registerClass(this);
     }
 
+    #activating;
+    #active;
+    #cancellable;
+    #items;
+    #nameOwnerChangedId;
+
     constructor() {
         super({
             g_bus_type: Gio.BusType.SESSION,
@@ -128,32 +134,32 @@ export class Service extends Gio.DBusProxy {
                 Gio.DBusProxyFlags.DO_NOT_LOAD_PROPERTIES,
         });
 
-        this._activating = false;
-        this._cancellable = new Gio.Cancellable();
-        this._items = [];
+        this.#activating = false;
+        this.#cancellable = new Gio.Cancellable();
+        this.#items = [];
 
-        this.init_async(GLib.PRIORITY_DEFAULT, this._cancellable,
-            this._initCallback.bind(this));
+        this.init_async(GLib.PRIORITY_DEFAULT, this.#cancellable,
+            this.#initCallback.bind(this));
     }
 
     get active() {
-        if (this._active === undefined)
-            this._active = false;
+        if (this.#active === undefined)
+            this.#active = false;
 
-        return this._active;
+        return this.#active;
     }
 
     on_g_signal(senderName_, signalName, parameters) {
         const args = parameters.deepUnpack();
 
         if (signalName === 'InterfacesAdded')
-            this._onInterfacesAdded(...args);
+            this.#onInterfacesAdded(...args);
         else if (signalName === 'InterfacesRemoved')
-            this._onInterfacesRemoved(...args);
+            this.#onInterfacesRemoved(...args);
     }
 
     vfunc_get_item(position) {
-        return this._items[position] || null;
+        return this.#items[position] || null;
     }
 
     vfunc_get_item_type() {
@@ -161,36 +167,36 @@ export class Service extends Gio.DBusProxy {
     }
 
     vfunc_get_n_items() {
-        return this._items.length;
+        return this.#items.length;
     }
 
     *[Symbol.iterator]() {
-        for (const item of this._items)
+        for (const item of this.#items)
             yield item;
     }
 
-    _initCallback(service, result) {
+    #initCallback(service, result) {
         try {
             service.init_finish(result);
 
-            this._nameOwnerChangedId = this.connect('notify::g-name-owner',
-                this._onNameOwnerChanged.bind(this));
-            this._onNameOwnerChanged();
+            this.#nameOwnerChangedId = this.connect('notify::g-name-owner',
+                this.#onNameOwnerChanged.bind(this));
+            this.#onNameOwnerChanged();
         } catch (e) {
             if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
                 console.warning(e);
         }
     }
 
-    _deviceInitCallback(device, result) {
+    #deviceInitCallback(device, result) {
         try {
             device.init_finish(result);
 
-            if (this._items.some(item => item.id === device.id))
+            if (this.#items.some(item => item.id === device.id))
                 return;
 
-            const position = this._items.length;
-            this._items.push(device);
+            const position = this.#items.length;
+            this.#items.push(device);
             this.items_changed(position, 0, 1);
         } catch (e) {
             if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
@@ -198,7 +204,7 @@ export class Service extends Gio.DBusProxy {
         }
     }
 
-    _onInterfacesAdded(objectPath, interfaces) {
+    #onInterfacesAdded(objectPath, interfaces) {
         // An empty list means only the object has been added
         if (Object.values(interfaces).length === 0)
             return;
@@ -209,49 +215,49 @@ export class Service extends Gio.DBusProxy {
             g_object_path: objectPath,
         });
 
-        device.init_async(GLib.PRIORITY_DEFAULT, this._cancellable,
-            this._deviceInitCallback.bind(this));
+        device.init_async(GLib.PRIORITY_DEFAULT, this.#cancellable,
+            this.#deviceInitCallback.bind(this));
     }
 
-    _onInterfacesRemoved(objectPath, _interfaces) {
-        const position = this._items.findIndex(
+    #onInterfacesRemoved(objectPath, _interfaces) {
+        const position = this.#items.findIndex(
             item => item.g_object_path === objectPath);
 
         if (position === -1)
             return;
 
-        this._items.splice(position, 1);
+        this.#items.splice(position, 1);
         this.items_changed(position, 1, 0);
     }
 
-    _onNameOwnerChanged() {
+    #onNameOwnerChanged() {
         if (this.g_name_owner === null) {
-            this._unloadDevices();
+            this.#unloadDevices();
 
-            this._active = false;
+            this.#active = false;
             this.notify('active');
         } else {
-            this._active = true;
+            this.#active = true;
             this.notify('active');
 
-            this._loadDevices();
+            this.#loadDevices();
         }
     }
 
-    _loadDevices() {
+    #loadDevices() {
         this.call(
             'GetManagedObjects',
             null,
             Gio.DBusCallFlags.DO_NOT_AUTO_START,
             -1,
-            this._cancellable,
+            this.#cancellable,
             (proxy, res) => {
                 try {
                     const variant = proxy.call_finish(res);
                     const [managedObjects] = variant.deepUnpack();
 
                     Object.entries(managedObjects).forEach(entry => {
-                        this._onInterfacesAdded(...entry);
+                        this.#onInterfacesAdded(...entry);
                     });
                 } catch (e) {
                     if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
@@ -261,9 +267,9 @@ export class Service extends Gio.DBusProxy {
         );
     }
 
-    _unloadDevices() {
-        const removed = this._items.length;
-        this._items.length = 0;
+    #unloadDevices() {
+        const removed = this.#items.length;
+        this.#items.length = 0;
         this.items_changed(0, removed, 0);
     }
 
@@ -274,10 +280,10 @@ export class Service extends Gio.DBusProxy {
      * in a `GApplication::activate` emission opening the main window.
      */
     activate() {
-        if (this._activating || this.active)
+        if (this.#activating || this.active)
             return;
 
-        this._activating = true;
+        this.#activating = true;
         Gio.DBus.session.call(
             'org.freedesktop.DBus',
             '/org/freedesktop/DBus',
@@ -287,7 +293,7 @@ export class Service extends Gio.DBusProxy {
             new GLib.VariantType('(u)'),
             Gio.DBusCallFlags.NONE,
             -1,
-            this._cancellable,
+            this.#cancellable,
             (connection, res) => {
                 try {
                     const reply = connection.call_finish(res);
@@ -305,7 +311,7 @@ export class Service extends Gio.DBusProxy {
                     if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
                         console.warning(e);
                 } finally {
-                    this._activating = false;
+                    this.#activating = false;
                 }
             }
         );
@@ -332,7 +338,7 @@ export class Service extends Gio.DBusProxy {
             null,
             Gio.DBusCallFlags.NONE,
             -1,
-            this._cancellable,
+            this.#cancellable,
             (connection, res) => {
                 try {
                     connection.call_finish(res);
@@ -359,7 +365,7 @@ export class Service extends Gio.DBusProxy {
             null,
             Gio.DBusCallFlags.NONE,
             -1,
-            this._cancellable,
+            this.#cancellable,
             (connection, res) => {
                 try {
                     connection.call_finish(res);
@@ -375,15 +381,15 @@ export class Service extends Gio.DBusProxy {
      * Disconnect from the D-Bus service, without affecting its state.
      */
     destroy() {
-        if (!this._cancellable.is_cancelled()) {
-            this._cancellable.cancel();
+        if (!this.#cancellable.is_cancelled()) {
+            this.#cancellable.cancel();
 
-            this.disconnect(this._nameOwnerChangedId);
-            this._nameOwnerChangedId = 0;
+            this.disconnect(this.#nameOwnerChangedId);
+            this.#nameOwnerChangedId = 0;
 
-            this._unloadDevices();
-            this._activating = true;
-            this._active = false;
+            this.#unloadDevices();
+            this.#activating = true;
+            this.#active = false;
         }
     }
 }
