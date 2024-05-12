@@ -30,24 +30,23 @@ export const DeviceState = Object.freeze({
 
 
 /**
- * A simple proxy wrapper for devices exported over DBus.
+ * A D-Bus proxy for a device.
  */
 export class Device extends Gio.DBusProxy {
-    static [GObject.interfaces] = [Gio.DBusInterface];
-    static [GObject.properties] = {
-        'icon-name': GObject.ParamSpec.string('icon-name', null, null,
-            GObject.ParamFlags.READABLE, null),
-        'id': GObject.ParamSpec.string('id', null, null,
-            GObject.ParamFlags.READABLE, null),
-        'name': GObject.ParamSpec.string('name', null, null,
-            GObject.ParamFlags.READABLE, null),
-        'state': GObject.ParamSpec.uint('state', null, null,
-            GObject.ParamFlags.READABLE,
-            DeviceState.NONE, DeviceState.CONNECTED | DeviceState.PAIRED_OUTGOING,
-            DeviceState.NONE),
-    };
-
     static {
+        this[GObject.interfaces] = [Gio.DBusInterface];
+        this[GObject.properties] = {
+            'icon-name': GObject.ParamSpec.string('icon-name', null, null,
+                GObject.ParamFlags.READABLE, null),
+            'id': GObject.ParamSpec.string('id', null, null,
+                GObject.ParamFlags.READABLE, null),
+            'name': GObject.ParamSpec.string('name', null, null,
+                GObject.ParamFlags.READABLE, null),
+            'state': GObject.ParamSpec.uint('state', null, null,
+                GObject.ParamFlags.READABLE,
+                DeviceState.NONE, DeviceState.CONNECTED | DeviceState.PAIRED_OUTGOING,
+                DeviceState.NONE),
+        };
         GObject.registerClass(this);
     }
 
@@ -107,16 +106,15 @@ export class Device extends Gio.DBusProxy {
 
 
 /**
- * A simple proxy wrapper for the GSConnect service.
+ * A D-Bus proxy for the service.
  */
 export class Service extends Gio.DBusProxy {
-    static [GObject.interfaces] = [Gio.DBusInterface, Gio.ListModel];
-    static [GObject.properties] = {
-        'active': GObject.ParamSpec.boolean('active', null, null,
-            GObject.ParamFlags.READABLE, false),
-    };
-
     static {
+        this[GObject.interfaces] = [Gio.DBusInterface, Gio.ListModel];
+        this[GObject.properties] = {
+            'active': GObject.ParamSpec.boolean('active', null, null,
+                GObject.ParamFlags.READABLE, false),
+        };
         GObject.registerClass(this);
     }
 

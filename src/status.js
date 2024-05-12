@@ -57,12 +57,11 @@ function _getIcon(name) {
  * A battery widget with an icon and text percentage.
  */
 class DeviceBattery extends St.BoxLayout {
-    static [GObject.properties] = {
-        'device': GObject.ParamSpec.object('device', null, null,
-            GObject.ParamFlags.READWRITE, Remote.Device),
-    };
-
     static {
+        this[GObject.properties] = {
+            'device': GObject.ParamSpec.object('device', null, null,
+                GObject.ParamFlags.READWRITE, Remote.Device),
+        };
         GObject.registerClass(this);
     }
 
@@ -180,12 +179,11 @@ class DeviceBattery extends St.BoxLayout {
  * A menu item for devices.
  */
 class DeviceMenuItem extends PopupMenu.PopupBaseMenuItem {
-    static [GObject.properties] = {
-        'device': GObject.ParamSpec.object('device', null, null,
-            GObject.ParamFlags.READWRITE, Remote.Device),
-    };
-
     static {
+        this[GObject.properties] = {
+            'device': GObject.ParamSpec.object('device', null, null,
+                GObject.ParamFlags.READWRITE, Remote.Device),
+        };
         GObject.registerClass(this);
     }
 
@@ -240,12 +238,11 @@ class DeviceMenuItem extends PopupMenu.PopupBaseMenuItem {
  * The quick settings menu for Valent.
  */
 class MenuToggle extends QuickSettings.QuickMenuToggle {
-    static [GObject.properties] = {
-        'service': GObject.ParamSpec.object('service', null, null,
-            GObject.ParamFlags.READWRITE, Remote.Service),
-    };
-
     static {
+        this[GObject.properties] = {
+            'service': GObject.ParamSpec.object('service', null, null,
+                GObject.ParamFlags.READWRITE, Remote.Service),
+        };
         GObject.registerClass(this);
     }
 
