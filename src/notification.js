@@ -364,6 +364,12 @@ class _Source {
         this._notificationPending = true;
 
         // valent-modifications-begin
+        const current = this._notifications[notification.id];
+        if (current?.deviceId && current.title === notification.title
+            && current.body === notification.body) {
+            this._notificationPending = false;
+            return;
+        }
         this._valentBindNotification(notification);
         // valent-modifications-end
 
