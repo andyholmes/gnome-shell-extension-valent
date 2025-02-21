@@ -36,9 +36,9 @@ class NotificationMessage extends Calendar.NotificationMessage {
 
         if (this.notification._defaultAction === 'app.device') {
             const [
-                deviceId_,
+                _deviceId,
                 deviceActionName,
-                [deviceActionTarget_],
+                [_deviceActionTarget],
             ] = this.notification._defaultActionTarget.deepUnpack();
 
             if (deviceActionName === 'notification.reply')
@@ -146,7 +146,7 @@ class NotificationMessage extends Calendar.NotificationMessage {
 
         const [
             replyId,
-            replyMessage_,
+            _replyMessage,
             replyNotification,
         ] = deviceActionTarget.deepUnpack();
 

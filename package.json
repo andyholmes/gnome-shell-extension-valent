@@ -3,7 +3,8 @@
   "description": "Valent (GNOME Shell Extension)",
   "license" : "GPL-3.0",
   "version": "0.0.0",
+  "type": "module",
   "devDependencies": {
-    "eslint": "^8.0.0"
+    "eslint": "^9.20.1"
   }
 }
