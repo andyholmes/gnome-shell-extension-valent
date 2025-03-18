@@ -9,8 +9,8 @@ import Meta from 'gi://Meta';
 import St from 'gi://St';
 
 import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
-import * as Calendar from 'resource:///org/gnome/shell/ui/calendar.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import * as MessageList from 'resource:///org/gnome/shell/ui/messageList.js';
 import * as MessageTray from 'resource:///org/gnome/shell/ui/messageTray.js';
 import {GtkNotificationDaemonAppSource} from 'resource:///org/gnome/shell/ui/notificationDaemon.js';
 
@@ -24,9 +24,9 @@ function _getPlatformData() {
 }
 
 /**
- * A custom `Calendar.NotificationMessage` for repliable notifications.
+ * A custom `MessageList.NotificationMessage` for repliable notifications.
  */
-class NotificationMessage extends Calendar.NotificationMessage {
+class NotificationMessage extends MessageList.NotificationMessage {
     static {
         GObject.registerClass(this);
     }
@@ -185,7 +185,7 @@ class _MessageTray {
      * Override for device notifications.
      *
      * This ensures device notifications that support replies are given a
-     * custom `Calendar.NotificationMessage` with a reply button and entry.
+     * custom `MessageList.NotificationMessage` with a reply button and entry.
      */
     _showNotification() {
         this._notification = this._notificationQueue.shift();
@@ -201,7 +201,7 @@ class _MessageTray {
         // valent-modifications-begin
         this._banner = this._notification?.deviceId
             ? new NotificationMessage(this._notification)
-            : new Calendar.NotificationMessage(this._notification);
+            : new MessageList.NotificationMessage(this._notification);
         // valent-modifications-end
         this._banner.can_focus = false;
         this._banner._header.expandButton.visible = false;
@@ -213,7 +213,7 @@ class _MessageTray {
         this._bannerBin.y = -this._banner.height;
         this.show();
 
-        Meta.disable_unredirect_for_display(global.display);
+        global.compositor.disable_unredirect();
         this._updateShowingNotification();
 
         const [x, y] = global.get_pointer();
@@ -242,7 +242,7 @@ class _NotificationSection {
      * Override for device notifications.
      *
      * This ensures device notifications that support replies are given a
-     * custom `Calendar.NotificationMessage` with a reply button and entry.
+     * custom `MessageList.NotificationMessage` with a reply button and entry.
      *
      * @param {MessageList.Source} source - an event source
      * @param {MessageTray.Notification} - an event notification
@@ -251,7 +251,7 @@ class _NotificationSection {
         // valent-modifications-begin
         const message = source?._appId === APPLICATION_ID
             ? new NotificationMessage(notification)
-            : new Calendar.NotificationMessage(notification);
+            : new MessageList.NotificationMessage(notification);
         // valent-modifications-end
 
         const isUrgent = notification.urgency === MessageTray.Urgency.CRITICAL;
