@@ -34,20 +34,6 @@ jobs:
           reporter: github-pr-review
           workdir: src/
 
-  reuse:
-    name: REUSE Compliance
-    needs: [pre-test]
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Lint
-        uses: fsfe/reuse-action@v5
-        with:
-          args: lint
-
   codespell:
     name: Codespell
     needs: [pre-test]
@@ -75,6 +61,34 @@ jobs:
 
       - name: Lint
         uses: wagoid/commitlint-github-action@v6
+
+  reuse:
+    name: REUSE Compliance
+    needs: [pre-test]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Lint
+        uses: fsfe/reuse-action@v5
+        with:
+          args: lint
+
+  translations:
+    name: Translations
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check
+        run: |
+          ./tests/potfiles-check.sh
 
   test-build:
     name: Test Build
