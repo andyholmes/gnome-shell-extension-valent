@@ -4,6 +4,7 @@
 import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
 import Gio from 'gi://Gio';
+import Graphene from 'gi://Graphene';
 import Clutter from 'gi://Clutter';
 import Meta from 'gi://Meta';
 import St from 'gi://St';
@@ -179,6 +180,9 @@ class NotificationMessage extends MessageList.NotificationMessage {
 
 /**
  * A mix-in class for the `MessageTray.MessageTray`.
+ *
+ * Note that these are the popup notifications that appear on the desktop,
+ * not the grouped notifications that appear in the date menu.
  */
 class _MessageTray {
     /**
@@ -235,9 +239,82 @@ class _MessageTray {
 }
 
 /**
- * A mix-in class for the `Calendar.NotificationSection`.
+ * Vendored wholesale from messageList.js
  */
-class _NotificationSection {
+const MESSAGE_ANIMATION_TIME = 100;
+const ScaleLayout = GObject.registerClass({
+    Properties: {
+        'scaling-enabled': GObject.ParamSpec.boolean(
+            'scaling-enabled', null, null,
+            GObject.ParamFlags.READWRITE,
+            true),
+    },
+}, class ScaleLayout extends Clutter.BinLayout {
+    _container = null;
+    _scalingEnabled = true;
+
+    get scalingEnabled() {
+        return this._scalingEnabled;
+    }
+
+    set scalingEnabled(value) {
+        if (this._scalingEnabled === value)
+            return;
+
+        this._scalingEnabled = value;
+        this.notify('scaling-enabled');
+        this.layout_changed();
+    }
+
+    vfunc_set_container(container) {
+        if (this._container === container)
+            return;
+
+        this._container?.disconnectObject(this);
+
+        this._container = container;
+
+        if (this._container) {
+            this._container.connectObject(
+                'notify::scale-x', () => this.layout_changed(),
+                'notify::scale-y', () => this.layout_changed(), this);
+        }
+    }
+
+    vfunc_get_preferred_width(container, forHeight) {
+        const [min, nat] = super.vfunc_get_preferred_width(container, forHeight);
+
+        if (this._scalingEnabled) {
+            return [
+                Math.floor(min * container.scale_x),
+                Math.floor(nat * container.scale_x),
+            ];
+        } else {
+            return [min, nat];
+        }
+    }
+
+    vfunc_get_preferred_height(container, forWidth) {
+        const [min, nat] = super.vfunc_get_preferred_height(container, forWidth);
+
+        if (this._scalingEnabled) {
+            return [
+                Math.floor(min * container.scale_y),
+                Math.floor(nat * container.scale_y),
+            ];
+        } else {
+            return [min, nat];
+        }
+    }
+});
+
+/**
+ * A mix-in class for the `MessageList.NotificationMessageGroup`.
+ *
+ * Note that these are the grouped notifications that appear in the date menu,
+ * not the popup notifications that appear on the desktop.
+ */
+class _NotificationMessageGroup {
     /**
      * Override for device notifications.
      *
@@ -247,37 +324,96 @@ class _NotificationSection {
      * @param {MessageList.Source} source - an event source
      * @param {MessageTray.Notification} - an event notification
      */
-    _onNotificationAdded(source, notification) {
+    _addNotification(source, notification) {
         // valent-modifications-begin
         const message = source?._appId === APPLICATION_ID
             ? new NotificationMessage(notification)
             : new MessageList.NotificationMessage(notification);
         // valent-modifications-end
 
-        const isUrgent = notification.urgency === MessageTray.Urgency.CRITICAL;
+        this._notificationToMessage.set(notification, message);
 
         notification.connectObject(
-            'destroy', () => {
+            'notify::urgency', () => {
+                const isUrgent = notification.urgency === MessageTray.Urgency.CRITICAL;
+                const oldHasUrgent = this.hasUrgent;
+
                 if (isUrgent)
+                    this._nUrgent++;
+                else
                     this._nUrgent--;
+
+                const index = isUrgent ? 0 : this._nUrgent;
+                this._moveMessage(message, index);
+                if (oldHasUrgent !== this.hasUrgent)
+                    this.notify('has-urgent');
+            }, message);
+
+        const isUrgent = notification.urgency === MessageTray.Urgency.CRITICAL;
+        const oldHasUrgent = this.hasUrgent;
+
+        if (isUrgent)
+            this._nUrgent++;
+
+        const wasExpanded = this.expanded;
+        const item = new St.Bin({
+            child: message,
+            canFocus: false,
+            layout_manager: new ScaleLayout(),
+            pivot_point: new Graphene.Point({x: .5, y: .5}),
+            scale_x: 0,
+            scale_y: 0,
+        });
+
+        message.connectObject(
+            'key-focus-in', this._onKeyFocusIn.bind(this),
+            'expanded', () => {
+                if (!this.expanded)
+                    this.emit('expand-toggle-requested');
             },
-            'notify::datetime', () => {
-                // The datetime property changes whenever the notification is updated
-                this.moveMessage(message, isUrgent ? 0 : this._nUrgent, this.mapped);
+            'close', () => {
+                // If the group is collapsed and one notification is closed, close the entire group
+                if (!this.expanded) {
+                    GObject.signal_stop_emission_by_name(message, 'close');
+                    this.close();
+                }
+            },
+            'clicked', () => {
+                if (!this.expanded) {
+                    GObject.signal_stop_emission_by_name(message, 'clicked');
+                    this.emit('expand-toggle-requested');
+                }
             }, this);
 
-        if (isUrgent) {
-            // Keep track of urgent notifications to keep them on top
-            this._nUrgent++;
-        } else if (this.mapped) {
-            // Only acknowledge non-urgent notifications in case it
-            // has important actions that are inaccessible when not
-            // shown as banner
-            notification.acknowledged = true;
+        let index = isUrgent ? 0 : this._nUrgent;
+        // If we add a child below the top child we need to adjust index to skip the cover child
+        if (index > 0)
+            index += 1;
+
+        this.insert_child_at_index(item, index);
+        this._ensureCoverPosition();
+        this._updateStackedMessagesFade();
+
+        item.layout_manager.scalingEnabled = this._expanded;
+
+        // The first message doesn't need to be animated since the entire group is animated
+        if (this._notificationToMessage.size > 1) {
+            item.ease({
+                scale_x: 1,
+                scale_y: 1,
+                duration: MESSAGE_ANIMATION_TIME,
+                mode: Clutter.AnimationMode.EASE_OUT_QUAD,
+            });
+        } else {
+            item.set_scale(1.0, 1.0);
         }
 
-        const index = isUrgent ? 0 : this._nUrgent;
-        this.addMessageAtIndex(message, index, this.mapped);
+        if (wasExpanded !== this.expanded)
+            this.notify('expanded');
+
+        if (oldHasUrgent !== this.hasUrgent)
+            this.notify('has-urgent');
+        this.emit('notification-added');
     }
 }
 
@@ -396,20 +532,6 @@ function rebindNotificationSource() {
         for (const notification of Object.values(source._notifications))
             source._valentBindNotification(notification);
     }
-
-    // Check if there's an active notification source for Valent
-    const source = sources[APPLICATION_ID];
-    if (!source)
-        return;
-
-    // Reconnect the `Calendar.NotificationSection`'s `notification-added`
-    // handler to ensure it uses the currently defined callback method
-    const notificationSection = Main.panel.statusArea.dateMenu
-        ._messageList._notificationSection;
-    source.disconnectObject(notificationSection);
-    source.connectObject('notification-added',
-        notificationSection._onNotificationAdded.bind(notificationSection),
-        notificationSection);
 }
 
 /**
@@ -432,11 +554,12 @@ export function enable(injectionManager) {
         'addNotification',
         () => _Source.prototype.addNotification);
 
-    const notificationSection = Main.panel.statusArea.dateMenu
-        ._messageList._notificationSection;
-    injectionManager.overrideMethod(notificationSection,
-        '_onNotificationAdded',
-        () => _NotificationSection.prototype._onNotificationAdded);
+    // See: https://gitlab.gnome.org/GNOME/gnome-shell/-/merge_requests/3672
+    if (MessageList.NotificationMessageGroup) {
+        injectionManager.overrideMethod(MessageList.NotificationMessageGroup.prototype,
+            '_addNotification',
+            () => _NotificationMessageGroup.prototype._addNotification);
+    }
     injectionManager.overrideMethod(Main.messageTray,
         '_showNotification',
         () => _MessageTray.prototype._showNotification);
@@ -451,10 +574,11 @@ export function enable(injectionManager) {
  *   instance or prototype modifications.
  */
 export function disable(injectionManager) {
-    const notificationSection = Main.panel.statusArea.dateMenu
-        ._messageList._notificationSection;
-    injectionManager.restoreMethod(notificationSection,
-        '_onNotificationAdded');
+    // See: https://gitlab.gnome.org/GNOME/gnome-shell/-/merge_requests/3672
+    if (MessageList.NotificationMessageGroup) {
+        injectionManager.restoreMethod(MessageList.NotificationMessageGroup.prototype,
+            '_addNotification');
+    }
     injectionManager.restoreMethod(Main.messageTray,
         '_showNotification');
 
