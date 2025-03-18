@@ -1,13 +1,13 @@
-name: CR
+name: Container Registry
 
 on:
   push:
     branches: [main]
     paths:
-      - 'build-aux/docker/Dockerfile'
+      - build-aux/docker/Dockerfile
   pull_request:
     paths:
-      - 'build-aux/docker/Dockerfile'
+      - build-aux/docker/Dockerfile
   schedule:
     # Once a week to keep dependencies up to date
     - cron: 0 0 * * 0
@@ -16,14 +16,9 @@ on:
 permissions:
   contents: read
 
-env:
-  REGISTRY: ghcr.io
-  USERNAME: ${{ github.actor }}
-  PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-
 jobs:
-  build:
-    name: Docker
+  container:
+    name: Container
     runs-on: ubuntu-latest
     permissions:
       packages: write
@@ -53,13 +48,15 @@ jobs:
         if: ${{ github.event_name != 'pull_request' }}
         uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ env.USERNAME }}
-          password: ${{ env.PASSWORD }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build
         uses: docker/build-push-action@v6
         with:
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           file: ${{ matrix.file }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.metadata.outputs.tags }}
