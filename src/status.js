@@ -84,6 +84,8 @@ class DeviceBattery extends St.BoxLayout {
             icon_size: 16,
         });
         this.add_child(this._icon);
+
+        this.connect('destroy', this._onDestroy.bind(this));
     }
 
     get device() {
@@ -97,20 +99,31 @@ class DeviceBattery extends St.BoxLayout {
         if (this.device === device)
             return;
 
-        this._bindDevice(device);
+        this._connectDevice(device);
 
         this._device = device;
         this.notify('device');
     }
 
-    _bindDevice(device = null) {
-        this.device?.action_group.disconnectObject(this);
-        device?.action_group.connectObject(
-            'action-added::battery.state', this._onActionChanged.bind(this),
-            'action-removed::battery.state', this._onActionChanged.bind(this),
-            'action-enabled-changed::battery.state', this._onActionEnabledChanged.bind(this),
-            'action-state-changed::battery.state', this._onActionStateChanged.bind(this),
-            this);
+    _connectDevice(device = null) {
+        if (this.device !== null) {
+            for (const handlerId of this._actionHandlerIds)
+                this.device.action_group.disconnect(handlerId);
+            this._actionHandlerIds = [];
+        }
+
+        if (device) {
+            this._actionHandlerIds = [
+                device.action_group.connect('action-added::battery.state',
+                    this._onActionChanged.bind(this)),
+                device.action_group.connect('action-removed::battery.state',
+                    this._onActionChanged.bind(this)),
+                device.action_group.connect('action-enabled-changed::battery.state',
+                    this._onActionEnabledChanged.bind(this)),
+                device.action_group.connect('action-state-changed::battery.state',
+                    this._onActionStateChanged.bind(this)),
+            ];
+        }
 
         this._onActionChanged(device?.action_group, 'battery.state');
     }
@@ -150,6 +163,14 @@ class DeviceBattery extends St.BoxLayout {
         this._label.text = formatter.format(percentage / 100);
 
         this.visible = isPresent;
+    }
+
+    _onDestroy(_actor) {
+        if (this.device === null)
+            return;
+
+        for (const handlerId of this._actionHandlerIds)
+            this.device.action_group.disconnect(handlerId);
     }
 }
 
@@ -195,9 +216,15 @@ class DeviceMenuItem extends PopupMenu.PopupBaseMenuItem {
             GObject.BindingFlags.SYNC_CREATE);
         this.device.bind_property('name', this._label, 'text',
             GObject.BindingFlags.SYNC_CREATE);
-        device.connectObject('notify::state', this._sync.bind(this), this);
+        this._stateChangedId = this.device.connect('notify::state',
+            this._sync.bind(this));
 
         this._sync(this.device);
+        this.connect('destroy', this._onDestroy.bind(this));
+    }
+
+    _onDestroy(_actor) {
+        this.device.disconnect(this._stateChangedId);
     }
 
     _sync(device, _pspec) {
@@ -222,10 +249,10 @@ class MenuToggle extends QuickSettings.QuickMenuToggle {
     constructor(params = {}) {
         super(params);
 
-        this.service.connectObject(
-            'notify::active', this._sync.bind(this),
-            'items-changed', this._onItemsChanged.bind(this),
-            this);
+        this._activeChangedId = this.service.connect('notify::active',
+            this._sync.bind(this));
+        this._itemsChangedId = this.service.connect('items-changed',
+            this._onItemsChanged.bind(this));
 
         this.menu.setHeader(_getIcon('active'), _('Devices'));
 
@@ -274,6 +301,9 @@ class MenuToggle extends QuickSettings.QuickMenuToggle {
     _onDestroy(_actor) {
         if (this._installedId)
             Shell.AppSystem.get_default().disconnect(this._installedId);
+
+        this.service.disconnect(this._activeChangedId);
+        this.service.disconnect(this._itemsChangedId);
     }
 
     _onDeviceActivated(item) {
@@ -292,12 +322,10 @@ class MenuToggle extends QuickSettings.QuickMenuToggle {
             const device = service.get_item(position + i);
 
             const menuItem = new DeviceMenuItem(device);
-            menuItem.connectObject(
-                'activate', this._onDeviceActivated.bind(this),
-                'notify::visible', this._sync.bind(this),
-                this);
-
+            menuItem.connect('activate', this._onDeviceActivated.bind(this));
+            menuItem.connect('notify::visible', this._sync.bind(this));
             this._deviceSection.addMenuItem(menuItem, position + i);
+
             this._deviceItems.splice(position + i, 0, menuItem);
         }
 
@@ -400,9 +428,8 @@ export class Indicator extends QuickSettings.SystemIndicator {
 
         // Service Proxy
         this._service = new Remote.Service();
-        this._service.connectObject(
-            'items-changed', this._onItemsChanged.bind(this),
-            this);
+        this._service.connect('items-changed',
+            this._onItemsChanged.bind(this));
 
         // Indicator Icon
         this._icon = this._addIndicator();
@@ -429,7 +456,7 @@ export class Indicator extends QuickSettings.SystemIndicator {
     _onItemsChanged(service, position, _removed, added) {
         for (let i = 0; i < added; i++) {
             const device = service.get_item(position + i);
-            device.connectObject('notify::state', this._sync.bind(this), this);
+            device.connect('notify::state', this._sync.bind(this));
         }
 
         this._sync();
