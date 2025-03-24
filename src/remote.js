@@ -184,7 +184,7 @@ export class Service extends Gio.DBusProxy {
             this.#onNameOwnerChanged();
         } catch (e) {
             if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
-                console.warning(e);
+                console.warn(e);
         }
     }
 
@@ -200,7 +200,7 @@ export class Service extends Gio.DBusProxy {
             this.items_changed(position, 0, 1);
         } catch (e) {
             if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
-                console.warning(e);
+                console.warn(e);
         }
     }
 
@@ -261,7 +261,7 @@ export class Service extends Gio.DBusProxy {
                     });
                 } catch (e) {
                     if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
-                        console.warning(e);
+                        console.warn(e);
                 }
             }
         );
@@ -309,7 +309,7 @@ export class Service extends Gio.DBusProxy {
                     }
                 } catch (e) {
                     if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
-                        console.warning(e);
+                        console.warn(e);
                 } finally {
                     this.#activating = false;
                 }
@@ -344,7 +344,7 @@ export class Service extends Gio.DBusProxy {
                     connection.call_finish(res);
                 } catch (e) {
                     if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
-                        console.warning(e);
+                        console.warn(e);
                 }
             }
         );
@@ -371,7 +371,7 @@ export class Service extends Gio.DBusProxy {
                     connection.call_finish(res);
                 } catch (e) {
                     if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
-                        console.warning(e);
+                        console.warn(e);
                 }
             }
         );
