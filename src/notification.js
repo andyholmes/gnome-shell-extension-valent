@@ -321,12 +321,11 @@ class _NotificationMessageGroup {
      * This ensures device notifications that support replies are given a
      * custom `MessageList.NotificationMessage` with a reply button and entry.
      *
-     * @param {MessageList.Source} source - an event source
      * @param {MessageTray.Notification} - an event notification
      */
-    _addNotification(source, notification) {
+    _addNotification(notification) {
         // valent-modifications-begin
-        const message = source?._appId === APPLICATION_ID
+        const message = this?.source?._appId === APPLICATION_ID
             ? new NotificationMessage(notification)
             : new MessageList.NotificationMessage(notification);
         // valent-modifications-end
