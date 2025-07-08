@@ -3,7 +3,7 @@
 
 project('gnome-shell-extension-valent',
         license: 'GPL-3.0-or-later',
-        version: '1.0.0.alpha.48',
+        version: '1.0.0.alpha.49',
   meson_version: '>= 0.56.0',
 )
 
