@@ -553,12 +553,9 @@ export function enable(injectionManager) {
         'addNotification',
         () => _Source.prototype.addNotification);
 
-    // See: https://gitlab.gnome.org/GNOME/gnome-shell/-/merge_requests/3672
-    if (MessageList.NotificationMessageGroup) {
-        injectionManager.overrideMethod(MessageList.NotificationMessageGroup.prototype,
-            '_addNotification',
-            () => _NotificationMessageGroup.prototype._addNotification);
-    }
+    injectionManager.overrideMethod(MessageList.NotificationMessageGroup.prototype,
+        '_addNotification',
+        () => _NotificationMessageGroup.prototype._addNotification);
     injectionManager.overrideMethod(Main.messageTray,
         '_showNotification',
         () => _MessageTray.prototype._showNotification);
@@ -573,11 +570,8 @@ export function enable(injectionManager) {
  *   instance or prototype modifications.
  */
 export function disable(injectionManager) {
-    // See: https://gitlab.gnome.org/GNOME/gnome-shell/-/merge_requests/3672
-    if (MessageList.NotificationMessageGroup) {
-        injectionManager.restoreMethod(MessageList.NotificationMessageGroup.prototype,
-            '_addNotification');
-    }
+    injectionManager.restoreMethod(MessageList.NotificationMessageGroup.prototype,
+        '_addNotification');
     injectionManager.restoreMethod(Main.messageTray,
         '_showNotification');
 
