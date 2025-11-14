@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gnome-shell-extension-valent\n"
 "Report-Msgid-Bugs-To: https://github.com/andyholmes/gnome-shell-extension-"
 "valent/issues\n"
-"POT-Creation-Date: 2023-09-23 11:13-0700\n"
+"POT-Creation-Date: 2025-09-25 13:19-0700\n"
 "PO-Revision-Date: 2023-11-02 21:44-0300\n"
 "Last-Translator: Victor L. Pavan <victorpavan001@gmail.com>\n"
 "Language-Team: Brazilian Portuguese <victorpavan001@gmail.com>\n"
@@ -21,44 +21,44 @@ msgstr ""
 "X-Generator: Gtranslator 45.3\n"
 
 #. TRANSLATORS: A notification button to show the quick-reply entry
-#: src/notification.js:71
+#: src/notification.js:72
 msgid "Reply"
 msgstr "Responder"
 
 #. TRANSLATORS: A reply entry in a notification
-#: src/notification.js:81
+#: src/notification.js:82
 msgid "Type a message"
 msgstr "Digite uma mensagem"
 
-#: src/status.js:260 src/status.js:445
+#: src/status.js:257 src/status.js:442
 msgid "Devices"
 msgstr "Dispositivos"
 
-#: src/status.js:285 src/status.js:405 src/status.js:409
+#: src/status.js:282 src/status.js:402 src/status.js:406
 msgid "All Devices"
 msgstr "Todos os Dispositivos"
 
 #. TRANSLATORS: This is the number of connected devices
-#: src/status.js:384
+#: src/status.js:381
 #, javascript-format
 msgid "%d Connected"
 msgid_plural "%d Connected"
 msgstr[0] "%d Conectado"
 msgstr[1] "%d Conectados"
 
-#: src/status.js:399
+#: src/status.js:396
 msgid "Valent must be installed to connect and sync devices"
 msgstr ""
 "Valent precisa estar instalado para conectar e sincronizar dispositivos"
 
-#: src/status.js:400
+#: src/status.js:397
 msgid "Help"
 msgstr "Ajuda"
 
-#: src/status.js:404
+#: src/status.js:401
 msgid "No available or connected devices"
 msgstr "Nenhum dispositivo disponível ou conectado"
 
-#: src/status.js:408
+#: src/status.js:405
 msgid "Turn on to connect to devices"
 msgstr "Ative para conectar dispositivos"
