@@ -1,5 +1,5 @@
 [![CD](https://github.com/andyholmes/gnome-shell-extension-valent/actions/workflows/cd.yml/badge.svg)](https://github.com/andyholmes/gnome-shell-extension-valent/actions/workflows/cd.yml)
-[![Translated](https://hosted.weblate.org/widget/valent/application/svg-badge.svg)](https://hosted.weblate.org/engage/valent/)
+[![Translated](https://hosted.weblate.org/widget/valent/gnome-shell-extension/svg-badge.svg)](https://hosted.weblate.org/engage/valent/)
 
 # Valent (GNOME Shell Extension)
 
