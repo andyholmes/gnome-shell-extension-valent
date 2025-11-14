@@ -1,4 +1,5 @@
 [![CD](https://github.com/andyholmes/gnome-shell-extension-valent/actions/workflows/cd.yml/badge.svg)](https://github.com/andyholmes/gnome-shell-extension-valent/actions/workflows/cd.yml)
+[![Translated](https://hosted.weblate.org/widget/valent/application/svg-badge.svg)](https://hosted.weblate.org/engage/valent/)
 
 # Valent (GNOME Shell Extension)
 
@@ -8,6 +9,14 @@
 platform libraries.
 
 This GNOME Shell extension helps Valent integrate with the GNOME desktop.
+
+Features:
+
+* Quick settings tile in user menu
+* Device overview in tile menu
+* Panel indicator when connected
+* Improved notification support
+* More…
 
 ## Installation
 
@@ -50,9 +59,14 @@ nightly builds available as an [extension ZIP].
 Join the community in [Discussions] to ask questions, share ideas and get
 involved in Valent!
 
+## Acknowledgements
+
+Translation services for Valent are provided courtesy of [Weblate].
+
 [Discussions]: https://github.com/andyholmes/valent/discussions
 [extension ZIP]: https://nightly.link/andyholmes/gnome-shell-extension-valent/workflows/cd/main/valent@andyholmes.ca.zip
 [GNOME]: https://www.gnome.org
-[kdeconnect]: https://kdeconnect.kde.org
+[KDE Connect]: https://kdeconnect.kde.org
 [Valent]: https://github.com/andyholmes/valent
+[Weblate]: https://weblate.org
 
