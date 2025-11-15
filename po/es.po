@@ -1,0 +1,61 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the gnome-shell-extension-valent package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gnome-shell-extension-valent\n"
+"Report-Msgid-Bugs-To: https://github.com/andyholmes/"
+"gnome-shell-extension-valent/issues\n"
+"POT-Creation-Date: 2025-09-25 13:19-0700\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"Language: es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+
+#. TRANSLATORS: A notification button to show the quick-reply entry
+#: src/notification.js:72
+msgid "Reply"
+msgstr ""
+
+#. TRANSLATORS: A reply entry in a notification
+#: src/notification.js:82
+msgid "Type a message"
+msgstr ""
+
+#: src/status.js:257 src/status.js:442
+msgid "Devices"
+msgstr ""
+
+#: src/status.js:282 src/status.js:402 src/status.js:406
+msgid "All Devices"
+msgstr ""
+
+#. TRANSLATORS: This is the number of connected devices
+#: src/status.js:381
+#, javascript-format
+msgid "%d Connected"
+msgid_plural "%d Connected"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/status.js:396
+msgid "Valent must be installed to connect and sync devices"
+msgstr ""
+
+#: src/status.js:397
+msgid "Help"
+msgstr ""
+
+#: src/status.js:401
+msgid "No available or connected devices"
+msgstr ""
+
+#: src/status.js:405
+msgid "Turn on to connect to devices"
+msgstr ""
