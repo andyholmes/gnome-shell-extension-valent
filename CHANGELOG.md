@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [1.0.0.alpha.49] - 2025-11-17
+
+### Changed
+
+- Release for GNOME 49.
+
 ## [1.0.0.alpha.48] - 2025-07-08
 
 ### Changed
