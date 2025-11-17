@@ -33,13 +33,12 @@ if any of this is unfamiliar, since this can be fixed up before merging.
 
 ## Submitting a Translation
 
-This project does not yet use a translation service like Weblate or Crowdin. You
-should also expect translatable strings to change frequently until the project
-is more mature.
+The easiest way to contribute a translation is through [Weblate][weblate],
+which provides a web interface for translators.
 
-To contribute a translation, open a pull request which adds your locale to the
-[`LINGUAS`][linguas] file and your translated `.po` file to the [`po/`][po_dir]
-directory.
+To contribute a translation directly, open a pull request that adds your locale
+to the [`LINGUAS`][linguas] file and your translated `.po` file to the
+[`po/`][po_dir] directory.
 
 
 ## Contributing Code
