@@ -46,7 +46,7 @@ jobs:
       - name: Spell Check
         uses: codespell-project/actions-codespell@master
         with:
-          skip: .git,./tests,./*.po
+          skip: .git,./tests,./po
 
   commitlint:
     name: Commitlint
