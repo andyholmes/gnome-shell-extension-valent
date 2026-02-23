@@ -9,7 +9,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: https://github.com/andyholmes/gnome-shell-extension-"
 "valent/issues\n"
 "POT-Creation-Date: 2025-09-25 13:19-0700\n"
-"PO-Revision-Date: 2026-02-13 16:09+0000\n"
+"PO-Revision-Date: 2026-02-24 19:09+0000\n"
 "Last-Translator: Xapitonov <sergejharitonov001@gmail.com>\n"
 "Language-Team: Russian <https://hosted.weblate.org/projects/valent/gnome-"
 "shell-extension/ru/>\n"
@@ -19,7 +19,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
-"X-Generator: Weblate 5.16-dev\n"
+"X-Generator: Weblate 5.16.1-dev\n"
 
 #. TRANSLATORS: A notification button to show the quick-reply entry
 #: src/notification.js:72
@@ -44,9 +44,9 @@ msgstr "Все устройства"
 #, javascript-format
 msgid "%d Connected"
 msgid_plural "%d Connected"
-msgstr[0] ""
+msgstr[0] "%d подключено"
 msgstr[1] "%d подключено"
-msgstr[2] "%d подключено"
+msgstr[2] "%d подключений"
 
 #: src/status.js:396
 msgid "Valent must be installed to connect and sync devices"
